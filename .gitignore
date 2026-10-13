@@ -1,0 +1,10 @@
+node_modules/
+dist/
+work/
+.DS_Store
+*.tsbuildinfo
+.venv/
+
+.env
+.env.*
+!.env.example

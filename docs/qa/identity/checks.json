@@ -1,0 +1,216 @@
+{
+  "browser": "154.0.8037.98",
+  "checks": [
+    {
+      "screen": "home",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "home",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "home",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone-before",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone-before",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "microphone-before",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "microphone",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "paused",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "singing",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "singing",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "singing",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "exit-dialog",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "result",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "result",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "result",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 911
+    },
+    {
+      "screen": "copied",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "challenge",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "challenge",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "challenge",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "duel",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 1015
+    },
+    {
+      "screen": "duel-review",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-review",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "duel-review",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 1015
+    }
+  ],
+  "errors": []
+}

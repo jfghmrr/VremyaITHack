@@ -1,0 +1,35 @@
+{
+  "name": "echo-karaoke",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "test": "vitest run",
+    "score:demo": "tsx tools/score_demo.ts",
+    "test:browser": "node tools/browser_check.mjs",
+    "format": "prettier --write src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md",
+    "format:check": "prettier --check src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md"
+  },
+  "dependencies": {
+    "lz-string": "^1.5.0",
+    "pitchy": "^4.1.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tone": "^15.1.22",
+    "zustand": "^5.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "playwright": "^1.51.0",
+    "prettier": "^3.9.10",
+    "tsx": "^4.19.0",
+    "typescript": "~5.8.3",
+    "vite": "^6.1.0",
+    "vitest": "^4.1.11"
+  }
+}

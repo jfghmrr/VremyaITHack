@@ -1,0 +1,11 @@
+node_modules
+.git
+dist
+work
+.venv
+docs/qa
+*.zip
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*

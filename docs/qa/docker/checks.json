@@ -1,0 +1,474 @@
+{
+  "browser": "155.0.8059.40",
+  "checks": [
+    {
+      "screen": "catalog",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "catalog",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "catalog",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "empty-search",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "registration",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "registration",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "registration",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "empty-progress",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "empty-progress",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "empty-progress",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-lobby",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-lobby",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "duel-lobby",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "detail",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "detail",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "detail",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone-before",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone-before",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "microphone-before",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "microphone",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "microphone",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "paused",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "singing",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "singing",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "singing",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "exit-dialog",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "result",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "result",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "result",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 971
+    },
+    {
+      "screen": "ideal-b",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "practice",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "practice",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "practice",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "practice-live",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "copied",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "progress",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "progress",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "progress",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "history-detail",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ranking",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ranking",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "ranking",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "challenge",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "challenge",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "challenge",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 778
+    },
+    {
+      "screen": "invitation",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "invitation",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "invitation",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "ghost-singing",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-result",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-result",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "duel-result",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 1010
+    },
+    {
+      "screen": "duel-review",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "duel-review",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "duel-review",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 1010
+    },
+    {
+      "screen": "profile",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "profile",
+      "width": 1920,
+      "height": 1080,
+      "scrollWidth": 1920,
+      "scrollHeight": 1080
+    },
+    {
+      "screen": "profile",
+      "width": 800,
+      "height": 768,
+      "scrollWidth": 800,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "NotAllowedError",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "NotFoundError",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "NotReadableError",
+      "width": 1366,
+      "height": 768,
+      "scrollWidth": 1366,
+      "scrollHeight": 768
+    },
+    {
+      "screen": "catalog-small",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 1131
+    },
+    {
+      "screen": "registration-small",
+      "width": 390,
+      "height": 844,
+      "scrollWidth": 390,
+      "scrollHeight": 844
+    }
+  ],
+  "errors": [],
+  "profilePersistence": true,
+  "realAudioPipelineWithSyntheticInput": true,
+  "practice": true,
+  "history": true,
+  "ab": true,
+  "duel": true
+}
