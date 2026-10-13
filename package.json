@@ -8,11 +8,14 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "score:demo": "tsx tools/score_demo.ts",
-    "test:browser": "node tools/browser_check.mjs",
-    "format": "prettier --write src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md",
-    "format:check": "prettier --check src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md"
+    "test:browser": "node docs/qa/account/check.mjs",
+    "format": "prettier --write src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md server/*.mjs docs/qa/account/*.mjs",
+    "format:check": "prettier --check src tests tools/*.ts tools/*.mjs *.json *.ts *.html *.md server/*.mjs docs/qa/account/*.mjs",
+    "server": "node server/start.mjs",
+    "test:server": "node --test server/*.test.mjs"
   },
   "dependencies": {
+    "fastify": "^5.12.7",
     "lz-string": "^1.5.0",
     "pitchy": "^4.1.0",
     "react": "^19.0.0",
@@ -31,5 +34,8 @@
     "typescript": "~5.8.3",
     "vite": "^6.1.0",
     "vitest": "^4.1.11"
+  },
+  "engines": {
+    "node": ">=22.13.0"
   }
 }

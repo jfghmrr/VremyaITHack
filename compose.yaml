@@ -1,7 +1,24 @@
 name: perepev
 services:
   website:
-    build: .
+    build:
+      context: .
+      target: website
     ports:
       - "127.0.0.1:${PEREPEV_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
+  api:
+    build:
+      context: .
+      target: api
+    environment:
+      APP_ORIGINS: "http://localhost:${PEREPEV_PORT:-8080},http://127.0.0.1:${PEREPEV_PORT:-8080}"
+      COOKIE_SECURE: "false"
+    volumes:
+      - accounts:/data
+    restart: unless-stopped
+volumes:
+  accounts:

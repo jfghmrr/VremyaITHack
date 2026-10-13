@@ -9,3 +9,6 @@ docs/qa
 .DS_Store
 .env
 .env.*
+data
+*.sqlite
+*.sqlite-*

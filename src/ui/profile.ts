@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ScoreResult } from "../scoring";
-export type Profile = { id: string; name: string };
+export type Profile = { id: string; name: string; email: string };
 export type Attempt = {
   id: string;
   owner: string;
@@ -13,21 +13,46 @@ export type Attempt = {
   shift: number;
   moments: ScoreResult["moments"];
 };
-const PROFILE = "perepev.profile.v1",
-  HISTORY = "perepev.history.v1";
-function readProfile(): Profile | null {
+export type Credentials = {
+  name: string;
+  email: string;
+  password: string;
+  consent: boolean;
+};
+async function api<T>(
+  path: string,
+  method = "GET",
+  body?: unknown,
+): Promise<T> {
+  let response: Response;
   try {
-    const p = JSON.parse(localStorage.getItem(PROFILE) || "null");
-    return p && typeof p.id === "string" && typeof p.name === "string"
-      ? p
-      : null;
+    response = await fetch(`/api/${path}`, {
+      method,
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json", "X-Perepev-Request": "1" },
+      body: body === undefined ? undefined : JSON.stringify(body),
+      signal: AbortSignal.timeout(12000),
+    });
   } catch {
-    return null;
+    throw new Error(
+      "Нет связи с кабинетом. Проверь соединение и попробуй снова. Петь можно без входа.",
+    );
   }
+  let data;
+  try {
+    data = await response.json();
+  } catch {
+    throw new Error("Сервер кабинета недоступен. Петь можно без входа.");
+  }
+  if (!response.ok)
+    throw new Error(data.error || "Не удалось выполнить запрос.");
+  return data as T;
 }
 function readHistory(): Attempt[] {
   try {
-    const data: unknown = JSON.parse(localStorage.getItem(HISTORY) || "[]");
+    const data: unknown = JSON.parse(
+      localStorage.getItem("perepev.history.v1") || "[]",
+    );
     return Array.isArray(data)
       ? data
           .filter(
@@ -53,6 +78,7 @@ function readHistory(): Attempt[] {
                   typeof m.text === "string",
               ),
           )
+          .filter((a) => a.owner === "guest")
           .slice(0, 50)
       : [];
   } catch {
@@ -60,59 +86,134 @@ function readHistory(): Attempt[] {
   }
 }
 export function useProfile() {
-  const [profile, setProfile] = useState(readProfile),
-    [attempts, setAttempts] = useState(readHistory),
-    [storageError, setStorageError] = useState("");
-  useEffect(() => {
-    const sync = (event: StorageEvent) => {
-      if (event.key === PROFILE || event.key === null)
-        setProfile(readProfile());
-      if (event.key === HISTORY || event.key === null)
-        setAttempts(readHistory());
-    };
-    window.addEventListener("storage", sync);
-    return () => window.removeEventListener("storage", sync);
-  }, []);
-  function register(name: string) {
-    const p = { id: profile?.id || crypto.randomUUID(), name: name.trim() };
-    if (p.name.length < 2 || p.name.length > 32)
-      throw new Error("Имя должно содержать от 2 до 32 символов.");
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [attempts, setAttempts] = useState<Attempt[]>(readHistory);
+  const [storageError, setStorageError] = useState("");
+  const [loading, setLoading] = useState(true);
+  const revision = useRef(0);
+  const [pendingSave, setPendingSave] = useState<Attempt | null>(null);
+  const [saving, setSaving] = useState(false);
+  async function refresh() {
+    const id = ++revision.current;
     try {
-      localStorage.setItem(PROFILE, JSON.stringify(p));
-    } catch {
-      throw new Error(
-        "Не удалось сохранить профиль. Разреши хранение данных сайта или продолжи без регистрации.",
-      );
+      const data = await api<{ profile: Profile | null }>("me");
+      const history = data.profile
+        ? (await api<{ attempts: Attempt[] }>("attempts")).attempts
+        : readHistory();
+      if (id !== revision.current) return;
+      setProfile(data.profile);
+      setAttempts(history);
+      setStorageError("");
+    } catch (e) {
+      if (id === revision.current) setStorageError((e as Error).message);
+    } finally {
+      if (id === revision.current) setLoading(false);
     }
+  }
+  useEffect(() => {
+    void refresh();
+    const sync = () => void refresh();
+    window.addEventListener("focus", sync);
+    return () => {
+      revision.current++;
+      window.removeEventListener("focus", sync);
+    };
+  }, []);
+  async function authenticate(mode: "register" | "login", value: Credentials) {
+    const { profile: p } = await api<{ profile: Profile }>(mode, "POST", value);
+    ++revision.current;
     setProfile(p);
+    setAttempts([]);
+    setStorageError("");
+    setLoading(false);
+    try {
+      setAttempts((await api<{ attempts: Attempt[] }>("attempts")).attempts);
+    } catch (e) {
+      setStorageError((e as Error).message);
+    }
     return p;
   }
-  function logout() {
-    try {
-      localStorage.removeItem(PROFILE);
-      setProfile(null);
-    } catch {
-      setStorageError("Не удалось выйти из профиля: хранилище недоступно.");
-    }
+  async function logout() {
+    await api("logout", "POST", {});
+    ++revision.current;
+    setProfile(null);
+    setPendingSave(null);
+    setAttempts(readHistory());
+    setStorageError("");
   }
-  function save(a: Omit<Attempt, "id" | "at" | "owner">) {
-    const next = [
-      {
-        ...a,
-        id: crypto.randomUUID(),
-        at: new Date().toISOString(),
-        owner: profile?.id || "guest",
-      },
-      ...readHistory(),
-    ].slice(0, 50);
-    setAttempts(next);
-    try {
-      localStorage.setItem(HISTORY, JSON.stringify(next));
-    } catch {
+  async function updateName(name: string) {
+    const { profile: p } = await api<{ profile: Profile }>("me", "PATCH", {
+      name,
+    });
+    setProfile(p);
+  }
+  async function changePassword(currentPassword: string, newPassword: string) {
+    await api("password", "POST", { currentPassword, newPassword });
+  }
+  async function save(a: Omit<Attempt, "id" | "at" | "owner">) {
+    const attempt = {
+      ...a,
+      id: crypto.randomUUID(),
+      at: new Date().toISOString(),
+      owner: profile?.id || "guest",
+    };
+    if (!profile) {
+      const next = [attempt, ...readHistory()].slice(0, 50);
+      setAttempts(next);
+      try {
+        localStorage.setItem("perepev.history.v1", JSON.stringify(next));
+      } catch {
+        setStorageError(
+          "Результат остался во вкладке. История на устройстве недоступна.",
+        );
+      }
+      return;
+    }
+    await persist(attempt);
+  }
+  async function persist(attempt: Attempt) {
+    if (attempt.owner !== profile?.id) {
       setStorageError(
-        "Результат доступен в этой вкладке. Историю не удалось сохранить на устройстве.",
+        "Войди в исходный кабинет, чтобы сохранить этот результат.",
       );
+      return;
+    }
+    setSaving(true);
+    try {
+      await api("attempts", "POST", attempt);
+      setAttempts((items) =>
+        [attempt, ...items.filter((item) => item.id !== attempt.id)].slice(
+          0,
+          100,
+        ),
+      );
+      setPendingSave(null);
+      setStorageError("");
+    } catch (e) {
+      setPendingSave(attempt);
+      setStorageError(
+        `Результат не сохранён в кабинете: ${(e as Error).message} Можно повторить сохранение до закрытия вкладки.`,
+      );
+    } finally {
+      setSaving(false);
     }
   }
-  return { profile, attempts, register, logout, save, storageError };
+  async function retrySave() {
+    if (pendingSave && !saving) await persist(pendingSave);
+  }
+  return {
+    profile,
+    pendingSave,
+    saving,
+    retrySave,
+    attempts,
+    storageError,
+    loading,
+    authenticate,
+    logout,
+    updateName,
+    changePassword,
+    save,
+    refresh,
+  };
 }

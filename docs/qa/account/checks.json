@@ -1,0 +1,231 @@
+{
+  "checks": [
+    {
+      "name": "catalog",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "catalog",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "catalog",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "login",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "login",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "login",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "register",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "register",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "register",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "register-small",
+      "width": 390,
+      "height": 844,
+      "sw": 390,
+      "sh": 954
+    },
+    {
+      "name": "empty-account",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "empty-account",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "empty-account",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "setup",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "setup",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "setup",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "singing",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "result",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "result",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "result",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 971
+    },
+    {
+      "name": "history",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "history",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "history",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "saved-breakdown",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "settings",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "settings",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "settings",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 768
+    },
+    {
+      "name": "login-error",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "duel",
+      "width": 1366,
+      "height": 768,
+      "sw": 1366,
+      "sh": 768
+    },
+    {
+      "name": "duel",
+      "width": 1920,
+      "height": 1080,
+      "sw": 1920,
+      "sh": 1080
+    },
+    {
+      "name": "duel",
+      "width": 800,
+      "height": 768,
+      "sw": 800,
+      "sh": 1010
+    }
+  ],
+  "errors": [],
+  "accounts": [
+    "qa-1791886160514@example.test",
+    "qa-other-1791886160514@example.test"
+  ],
+  "crossBrowserLogin": true,
+  "privateHistory": true,
+  "changePassword": true,
+  "directSingingFlow": true,
+  "duel": true
+}

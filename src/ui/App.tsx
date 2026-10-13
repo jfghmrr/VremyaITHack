@@ -1,11 +1,6 @@
 import { useEffect, useRef, useState, useMemo } from "react";
 import { Brand, cover } from "./Brand";
-import {
-  Catalog,
-  SongDetail,
-  DuelLobby,
-  HistoryScreen,
-} from "./LibraryScreens";
+import { Catalog } from "./LibraryScreens";
 import { ProfileScreen } from "./ProfileScreen";
 import { useProfile } from "./profile";
 import { Practice } from "./Practice";
@@ -23,17 +18,7 @@ import { Duel } from "./Duel";
 import { ExitDialog } from "./ExitDialog";
 import { useMicrophones } from "./useMicrophones";
 import { decodeChallenge, type Challenge } from "../challenge/codec";
-type Screen =
-  | "home"
-  | "detail"
-  | "mic"
-  | "sing"
-  | "result"
-  | "register"
-  | "duels"
-  | "ranking"
-  | "progress"
-  | "practice";
+type Screen = "home" | "mic" | "sing" | "result" | "register" | "practice";
 const axisNames = {
   intervals: "Интервалы",
   rhythm: "Ритм",
@@ -46,7 +31,18 @@ export function App() {
   const inputs = useMicrophones();
   const journal = useProfile();
   const [practiceMoment, setPracticeMoment] = useState<Moment | null>(null);
+  const previousAccount = useRef<string | null>(null);
   useEffect(() => {
+    const next = journal.profile?.id || null;
+    if (previousAccount.current && previousAccount.current !== next) {
+      clean();
+      setResult(null);
+      recording.current = null;
+      frames.current = [];
+      setPracticeMoment(null);
+      setName(journal.profile?.name || "");
+    }
+    previousAccount.current = next;
     if (journal.profile) setName(journal.profile.name);
   }, [journal.profile, setName]);
   const [paused, setPaused] = useState(false);
@@ -91,6 +87,10 @@ export function App() {
       try {
         const incoming = decodeChallenge(location.hash);
         setGhost(incoming);
+        if (incoming) {
+          clean();
+          setScreen("home");
+        }
       } catch (e) {
         setGhost(null);
         setError((e as Error).message);
@@ -142,7 +142,7 @@ export function App() {
     setIdealView(false);
     setScreen(next);
   }
-  async function select(id: string, target: "mic" | "detail" = "mic") {
+  async function select(id: string) {
     clean();
     const ticket = ++request.current;
     setBusy(true);
@@ -162,7 +162,7 @@ export function App() {
       setResult(null);
       recording.current = null;
       frames.current = [];
-      setScreen(target);
+      setScreen("mic");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось открыть песню");
     } finally {
@@ -171,6 +171,8 @@ export function App() {
   }
   async function enableMic(deviceId = inputs.selected) {
     if (!song) return;
+    previewAudio.current?.pause();
+    setPreview(null);
     const ticket = ++request.current;
     capture.current?.stop();
     capture.current = null;
@@ -246,7 +248,7 @@ export function App() {
       setTimeout(() => {
         const scored = scorePerformance(frames.current, song);
         setResult(scored);
-        journal.save({
+        void journal.save({
           songId: song.id,
           title: song.title,
           name: name.trim() || "Гость",
@@ -391,9 +393,7 @@ export function App() {
           {(
             [
               ["home", "Петь"],
-              ["duels", "Дуэли"],
-              ["ranking", "Рейтинг"],
-              ["progress", "Мой прогресс"],
+              ["register", "Кабинет"],
             ] as const
           ).map(([id, label]) => (
             <button
@@ -401,7 +401,7 @@ export function App() {
               aria-current={
                 screen === id ||
                 (id === "home" &&
-                  ["detail", "mic", "sing", "result"].includes(screen))
+                  ["mic", "sing", "result", "practice"].includes(screen))
                   ? "page"
                   : undefined
               }
@@ -414,19 +414,30 @@ export function App() {
         <span className="header-label">Без лишнего шума.</span>
         <button
           className="profile-link"
-          aria-label={journal.profile ? "Мой профиль" : "Регистрация"}
+          aria-label={
+            journal.profile ? "Настройки кабинета" : "Войти в кабинет"
+          }
           onClick={() => go("register")}
         >
           <span className="avatar">
             {journal.profile?.name.slice(0, 1) || "Я"}
           </span>
-          <span>{journal.profile?.name || "Регистрация"}</span>
+          <span>{journal.profile?.name || "Войти"}</span>
         </button>
       </header>
       <main>
         {journal.storageError && (
           <p className="notice" role="status">
             {journal.storageError}
+            {journal.pendingSave && (
+              <button
+                className="secondary"
+                disabled={journal.saving}
+                onClick={() => void journal.retrySave()}
+              >
+                Повторить сохранение
+              </button>
+            )}
           </p>
         )}
         {error && (
@@ -473,74 +484,18 @@ export function App() {
               name={name}
               setName={setName}
               busy={busy}
-              select={(id) => void select(id, "detail")}
+              select={(id) => void select(id)}
+              registered={!!journal.profile}
+              onResume={
+                result && recording.current ? () => go("result") : undefined
+              }
               preview={preview}
               listen={(id, file) => void listen(id, file)}
             />
           </>
         )}
-        {screen === "detail" && song && (
-          <SongDetail
-            song={song}
-            info={catalog.find((s) => s.id === song.id)}
-            preview={preview}
-            listen={() => {
-              const info = catalog.find((s) => s.id === song.id);
-              if (info?.preview) void listen(song.id, info.preview);
-            }}
-            onStart={() => go("mic")}
-            onBack={home}
-            best={
-              journal.attempts
-                .filter(
-                  (a) =>
-                    a.songId === song.id &&
-                    a.owner === (journal.profile?.id || "guest"),
-                )
-                .sort((a, b) => b.score - a.score)[0]?.score
-            }
-          />
-        )}
         {screen === "register" && (
-          <ProfileScreen
-            profile={journal.profile}
-            onSave={(value) => {
-              const p = journal.register(value);
-              setName(p.name);
-              home();
-            }}
-            onGuest={home}
-            onLogout={() => {
-              journal.logout();
-              setName("");
-              home();
-            }}
-          />
-        )}
-        {screen === "duels" && (
-          <DuelLobby
-            ghost={ghost}
-            songs={catalog}
-            onSelect={(id) => void select(id)}
-            onCatalog={home}
-            hasResult={!!result && !!recording.current}
-            onResult={() => go("result")}
-          />
-        )}
-        {(screen === "ranking" || screen === "progress") && (
-          <HistoryScreen
-            key={screen}
-            mode={screen === "ranking" ? "ranking" : "progress"}
-            attempts={
-              screen === "progress"
-                ? journal.attempts.filter(
-                    (a) => a.owner === (journal.profile?.id || "guest"),
-                  )
-                : journal.attempts
-            }
-            songs={catalog}
-            onSing={home}
-          />
+          <ProfileScreen journal={journal} songs={catalog} onGuest={home} />
         )}
         {screen === "practice" && song && practiceMoment && backing.current && (
           <Practice
@@ -554,8 +509,8 @@ export function App() {
         )}
         {screen === "mic" && song && (
           <section className="focus-screen">
-            <button className="back" onClick={() => go("detail")}>
-              ← К фрагменту
+            <button className="back" onClick={home}>
+              ← Выбрать другую песню
             </button>
             <div className="setup-steps">
               <span>✓ Песня</span>
@@ -569,6 +524,22 @@ export function App() {
                 <p className="lead">
                   {song.title}, {song.duration_s} секунд
                 </p>
+                {!ready &&
+                  catalog.find((item) => item.id === song.id)?.preview && (
+                    <button
+                      className="secondary setup-preview"
+                      onClick={() => {
+                        const file = catalog.find(
+                          (item) => item.id === song.id,
+                        )?.preview;
+                        if (file) void listen(song.id, file);
+                      }}
+                    >
+                      {preview === song.id
+                        ? "Остановить эталон"
+                        : "Послушать мелодию"}
+                    </button>
+                  )}
                 {ghostResult && (
                   <p className="ghost-label">
                     Против призрака: {ghost?.name} ·{" "}

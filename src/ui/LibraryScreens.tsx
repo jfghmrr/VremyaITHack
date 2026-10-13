@@ -11,6 +11,8 @@ export function Catalog({
   preview,
   listen,
   busy,
+  registered,
+  onResume,
 }: {
   songs: SongInfo[];
   name: string;
@@ -19,6 +21,8 @@ export function Catalog({
   preview: string | null;
   listen: (id: string, file: string) => void;
   busy: boolean;
+  registered?: boolean;
+  onResume?: () => void;
 }) {
   const [query, setQuery] = useState(""),
     [filter, setFilter] = useState("Все");
@@ -46,16 +50,27 @@ export function Catalog({
             <br />
             Узнай, где совпали интервалы, и попробуй точнее.
           </p>
-          <label className="name-field">
-            Твоё имя
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={32}
-              placeholder="Например, Саша"
-              autoComplete="nickname"
-            />
-          </label>
+          {registered ? (
+            <p className="name-field">
+              Ты поёшь как <strong>{name}</strong>
+            </p>
+          ) : (
+            <label className="name-field">
+              Твоё имя
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={32}
+                placeholder="Например, Саша"
+                autoComplete="nickname"
+              />
+            </label>
+          )}
+          {onResume && (
+            <button className="text-button resume-result" onClick={onResume}>
+              ← Вернуться к последнему разбору
+            </button>
+          )}
         </div>
         {featured && (
           <aside className="featured">
@@ -369,10 +384,12 @@ export function HistoryScreen({
   songs,
   mode,
   onSing,
+  remote = false,
 }: {
   attempts: Attempt[];
   songs: SongInfo[];
   mode: "progress" | "ranking";
+  remote?: boolean;
   onSing: () => void;
 }) {
   const [songId, setSongId] = useState(songs[0]?.id || "ode"),
@@ -404,7 +421,9 @@ export function HistoryScreen({
           </h1>
           <p className="lead">
             {mode === "progress"
-              ? "Твои полные попытки на этом устройстве."
+              ? remote
+                ? "Твои результаты сохранены в кабинете."
+                : "Твои полные попытки на этом устройстве."
               : "Лучшие результаты профилей в этом браузере. Онлайн-рейтинга нет."}
           </p>
         </div>
@@ -436,6 +455,27 @@ export function HistoryScreen({
       ) : (
         <>
           {mode === "progress" && (
+            <div className="progress-summary">
+              <div>
+                <span>Попыток</span>
+                <strong>{selected.length}</strong>
+              </div>
+              <div>
+                <span>Личный рекорд</span>
+                <strong>
+                  {Math.round(Math.max(...selected.map((a) => a.score)))}{" "}
+                  <small>/ 100</small>
+                </strong>
+              </div>
+              <div>
+                <span>Последний результат</span>
+                <strong>
+                  {Math.round(selected[0].score)} <small>/ 100</small>
+                </strong>
+              </div>
+            </div>
+          )}
+          {mode === "progress" && selected.length >= 2 && !open && (
             <div className="progress-chart">
               <span className="eyebrow">ОЦЕНКА КАЖДОГО ДУБЛЯ</span>
               <svg
@@ -535,8 +575,8 @@ export function HistoryScreen({
             ))}
           </div>
           <p className="fine">
-            Сохраняем до 50 последних результатов. Интервалы 45%, ритм 25%,
-            стабильность 15%, покрытие 15%.
+            Сохраняем до {remote ? 100 : 50} последних результатов. Интервалы
+            45%, ритм 25%, стабильность 15%, покрытие 15%.
           </p>
         </>
       )}
