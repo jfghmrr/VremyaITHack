@@ -49,9 +49,12 @@ test.describe("страница ошибки на телефоне", () => {
 
 test("переход по ссылке внутри сайта на несуществующий адрес тоже ведёт на русскую страницу", async ({ page }) => {
   await page.goto("/");
+  await page.waitForLoadState("networkidle");
   await page.evaluate(() => {
     const a = document.createElement("a");
-    a.href = "/songs/missing/deeper";
+    // /songs/* занят статическими аудиофайлами: Caddy возвращает там обычный 404.
+    // Здесь проверяем несуществующую страницу приложения после его загрузки.
+    a.href = "/missing/deeper";
     a.textContent = "битая ссылка";
     a.id = "broken";
     document.body.append(a);
