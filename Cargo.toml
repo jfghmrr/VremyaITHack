@@ -1,0 +1,19 @@
+[workspace]
+resolver = "3"
+members = ["crates/scoring-core", "crates/scoring-wasm", "crates/api"]
+
+[workspace.package]
+edition = "2024"
+rust-version = "1.99"
+license = "MIT"
+
+[workspace.dependencies]
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = { version = "1.0.154", features = ["float_roundtrip"] }
+
+[profile.release]
+lto = true
+codegen-units = 1
+
+[profile.release.package.scoring-wasm]
+opt-level = "s"

@@ -1,0 +1,8 @@
+{
+  "disconnect_seconds": 6,
+  "return_window_seconds": 6,
+  "accept_seconds": 20,
+  "ready_seconds": 30,
+  "countdown_seconds": 3,
+  "collect_seconds": 12
+}

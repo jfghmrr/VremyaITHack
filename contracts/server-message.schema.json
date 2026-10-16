@@ -1,0 +1,558 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ServerEnvelope",
+  "description": "Сообщение сервера. `seq` есть у событий матча: важные события доставляются\nповторно после переподключения, клиент отбрасывает уже виденные номера.",
+  "type": "object",
+  "properties": {
+    "seq": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "uint64",
+      "minimum": 0
+    },
+    "v": {
+      "type": "integer",
+      "format": "uint8",
+      "maximum": 255,
+      "minimum": 0
+    }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "heartbeat_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "name": {
+          "type": "string"
+        },
+        "server_time": {
+          "type": "number",
+          "format": "double"
+        },
+        "type": {
+          "type": "string",
+          "const": "welcome"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "type",
+        "user_id",
+        "name",
+        "server_time",
+        "heartbeat_ms"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "c": {
+          "type": "number",
+          "format": "double"
+        },
+        "s": {
+          "type": "number",
+          "format": "double"
+        },
+        "type": {
+          "type": "string",
+          "const": "pong"
+        }
+      },
+      "required": [
+        "type",
+        "c",
+        "s"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "ok": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "const": "ack"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "ok"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "state": {
+          "$ref": "#/$defs/QueueState"
+        },
+        "type": {
+          "type": "string",
+          "const": "queue"
+        }
+      },
+      "required": [
+        "type",
+        "state"
+      ]
+    },
+    {
+      "description": "Состояние матча целиком. Приходит после подключения и при каждом изменении.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "match"
+        },
+        "view": {
+          "$ref": "#/$defs/MatchView"
+        }
+      },
+      "required": [
+        "type",
+        "view"
+      ]
+    },
+    {
+      "description": "Промежуточная кривая соперника для анимации. Может быть пропущена или заменена.",
+      "type": "object",
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "points": {
+          "type": "array",
+          "items": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "format": "int16",
+            "maximum": 32767,
+            "minimum": -32768
+          }
+        },
+        "type": {
+          "type": "string",
+          "const": "opponent"
+        }
+      },
+      "required": [
+        "type",
+        "match_id",
+        "from",
+        "points"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "string"
+        },
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "type": {
+          "type": "string",
+          "const": "room"
+        }
+      },
+      "required": [
+        "type",
+        "match_id",
+        "code"
+      ]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "message": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string",
+          "const": "error"
+        }
+      },
+      "required": [
+        "type",
+        "message"
+      ]
+    }
+  ],
+  "required": [
+    "v"
+  ],
+  "$defs": {
+    "Axes": {
+      "type": "object",
+      "properties": {
+        "coverage": {
+          "type": "number",
+          "format": "double"
+        },
+        "intervals": {
+          "type": "number",
+          "format": "double"
+        },
+        "rhythm": {
+          "type": "number",
+          "format": "double"
+        },
+        "stability": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "intervals",
+        "rhythm",
+        "stability",
+        "coverage"
+      ]
+    },
+    "MatchResult": {
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerResult"
+          }
+        },
+        "rated": {
+          "type": "boolean"
+        },
+        "technical": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rated",
+        "technical",
+        "players"
+      ]
+    },
+    "MatchState": {
+      "type": "string",
+      "enum": [
+        "created",
+        "waiting",
+        "ready_check",
+        "countdown",
+        "singing",
+        "collecting",
+        "finished",
+        "cancelled",
+        "failed"
+      ]
+    },
+    "MatchView": {
+      "type": "object",
+      "properties": {
+        "algorithm_version": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "deadline_ms": {
+          "description": "Срок текущего шага (подтверждение, готовность, сбор кривых), мс Unix.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "end_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "type": "string"
+        },
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerView"
+          }
+        },
+        "result": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MatchResult"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "room_code": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "song": {
+          "$ref": "#/$defs/SongRef"
+        },
+        "start_at_ms": {
+          "description": "Время старта по часам сервера, мс Unix.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "state": {
+          "$ref": "#/$defs/MatchState"
+        }
+      },
+      "required": [
+        "match_id",
+        "kind",
+        "state",
+        "song",
+        "algorithm_version",
+        "players"
+      ]
+    },
+    "Outcome": {
+      "type": "string",
+      "enum": [
+        "win",
+        "draw",
+        "loss"
+      ]
+    },
+    "PlayerResult": {
+      "type": "object",
+      "properties": {
+        "axes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Axes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mmr_after": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "mmr_before": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "score": {
+          "description": "Канонический балл; null, если кривая неполная (техническое поражение).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "shift": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "standing": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "user_id",
+        "outcome"
+      ]
+    },
+    "PlayerView": {
+      "type": "object",
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "connected": {
+          "type": "boolean"
+        },
+        "finished": {
+          "type": "boolean"
+        },
+        "left": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "points": {
+          "description": "Сколько точек кривой принято сервером.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "slot": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "standing": {
+          "description": "Ранг или «Калибровка n/10»; MMR соперника не раскрывается.",
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "slot",
+        "user_id",
+        "name",
+        "standing",
+        "accepted",
+        "ready",
+        "connected",
+        "finished",
+        "left",
+        "points"
+      ]
+    },
+    "QueueState": {
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "note": {
+          "description": "Пояснение для пользователя, например об исчерпанном лимите пары.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pool": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "since_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "status": {
+          "$ref": "#/$defs/QueueStatus"
+        },
+        "window": {
+          "description": "Допустимая разница MMR сейчас (±).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "required": [
+        "status"
+      ]
+    },
+    "QueueStatus": {
+      "type": "string",
+      "enum": [
+        "idle",
+        "searching",
+        "matched"
+      ]
+    },
+    "SongRef": {
+      "type": "object",
+      "properties": {
+        "duration_s": {
+          "type": "number",
+          "format": "double"
+        },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "version",
+        "duration_s"
+      ]
+    }
+  }
+}

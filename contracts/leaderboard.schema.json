@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Leaderboard",
+  "type": "object",
+  "properties": {
+    "me": {
+      "description": "Место текущего игрока, если он откалиброван и не попал в первые места.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/LeaderRow"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "top": {
+      "description": "Первые места: только игроки, прошедшие калибровку.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/LeaderRow"
+      }
+    }
+  },
+  "required": [
+    "top"
+  ],
+  "$defs": {
+    "LeaderRow": {
+      "description": "Строка таблицы лидеров: место среди откалиброванных игроков, имя и MMR.",
+      "type": "object",
+      "properties": {
+        "me": {
+          "description": "Это строка текущего игрока.",
+          "type": "boolean"
+        },
+        "mmr": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "type": "string"
+        },
+        "place": {
+          "type": "integer",
+          "format": "int64"
+        }
+      },
+      "required": [
+        "place",
+        "name",
+        "mmr",
+        "me"
+      ]
+    }
+  }
+}

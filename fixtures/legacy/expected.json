@@ -1,0 +1,25 @@
+{
+  "users": [
+    {
+      "email": "legacy@example.test",
+      "name": "Старожил",
+      "password": "Legacy-password-2025",
+      "id": "883980e7-b95b-4c7c-80b1-43d7022879a0",
+      "cookie": "perepev_session=8e0ce4f12faf5adb0f01cbbe7d6097f9099367f9833f45ffcbf590b750df80bd",
+      "scores": [
+        71.5,
+        88.2
+      ]
+    },
+    {
+      "email": "unicode@example.test",
+      "name": "Юникод",
+      "password": "Пароль-с-юникодом 🎤 2025",
+      "id": "e1c1ad7a-15db-47a6-947d-13548ea6d4a4",
+      "cookie": "perepev_session=6195cf7391379b8f80bbe52e2f9c32d75b38e14e94dc2c98435e4ce2d8d86556",
+      "scores": [
+        55
+      ]
+    }
+  ]
+}

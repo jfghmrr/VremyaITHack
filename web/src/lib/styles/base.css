@@ -1,0 +1,464 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* Стена комнаты: тёмная краска, зерно и тёплое пятно настольной лампы слева сверху. */
+html {
+  font-family: var(--font);
+  font-size: 100%;
+  line-height: var(--lh-text);
+  color: var(--on-room);
+  background-color: var(--room);
+  background-image:
+    radial-gradient(ellipse 60% 50% at 8% 0%, rgb(255 196 128 / 0.085), transparent 70%),
+    radial-gradient(ellipse 50% 60% at 100% 100%, rgb(120 130 150 / 0.05), transparent 70%),
+    var(--tex-grain);
+  font-variant-numeric: tabular-nums;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  margin: 0;
+  font-size: var(--t-m);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 650;
+  line-height: var(--lh-tight);
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.18em;
+  text-decoration-thickness: 1px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.hand {
+  font-family: var(--font-hand);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+.mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  letter-spacing: 0;
+}
+
+/* Бумага: лист, тетрадь, миллиметровка, стикер. Длинный текст на бумаге не наклоняется. */
+.sheet {
+  position: relative;
+  color: var(--ink);
+  background: var(--paper-2) var(--tex-paper);
+  border-radius: 2px;
+  box-shadow: var(--shadow-sheet);
+}
+.sheet.ruled {
+  background-image:
+    linear-gradient(90deg, transparent 2.6rem, var(--margin) 2.6rem, var(--margin) calc(2.6rem + 1px), transparent calc(2.6rem + 1px)),
+    repeating-linear-gradient(180deg, transparent 0 calc(1.75rem - 1px), var(--rule) calc(1.75rem - 1px) 1.75rem),
+    var(--tex-paper);
+  background-position: 0 0, 0 var(--rule-start, 2.75rem), 0 0;
+  background-repeat: repeat, repeat-x, repeat;
+  background-size: auto, 100% 1.75rem, auto;
+}
+.sheet.graph {
+  background-image:
+    linear-gradient(rgb(110 150 170 / 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(110 150 170 / 0.22) 1px, transparent 1px),
+    var(--tex-paper);
+  background-size: 16px 16px, 16px 16px, auto;
+}
+.sheet.kraft {
+  background-color: var(--kraft);
+}
+.note {
+  position: relative;
+  color: var(--ink);
+  background: #efd98a var(--tex-paper);
+  box-shadow: var(--shadow-sticker), 0 10px 16px -10px rgb(0 0 0 / 0.7);
+}
+
+/* Полупрозрачный скотч: края зубчатые, сквозь него видно бумагу. */
+.tape {
+  position: absolute;
+  z-index: 2;
+  width: var(--tape-w, 92px);
+  height: 26px;
+  background: rgb(232 226 205 / 0.52);
+  box-shadow: 0 1px 1px rgb(0 0 0 / 0.12);
+  clip-path: polygon(0 8%, 6% 0, 12% 10%, 18% 0, 24% 8%, 30% 0, 36% 6%, 42% 0, 100% 0, 100% 92%, 94% 100%, 88% 90%, 82% 100%, 76% 92%, 70% 100%, 64% 94%, 58% 100%, 0 100%);
+  pointer-events: none;
+  backdrop-filter: brightness(1.04);
+}
+
+/* Кнопки — полоски бумаги с неровным краем. Фон на ::before, чтобы контур фокуса не обрезался. */
+.btn {
+  --btn-bg: var(--paper);
+  --btn-ink: var(--ink);
+  --torn: polygon(0.6% 6%, 4% 0, 31% 4%, 58% 0.5%, 86% 3.5%, 99.4% 0, 100% 48%, 99.2% 96%, 72% 100%, 44% 96%, 15% 100%, 0 95%, 0.8% 52%);
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: var(--control-h);
+  padding: 0 var(--s-4);
+  border: 0;
+  background: none;
+  color: var(--btn-ink);
+  font-size: var(--t-m);
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  text-decoration: none;
+  filter: drop-shadow(0 2px 0 rgb(0 0 0 / 0.5));
+  transition:
+    transform var(--d-fast) var(--ease),
+    filter var(--d-fast) var(--ease);
+}
+.btn::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--btn-bg) var(--tex-paper);
+  clip-path: var(--torn);
+  transition: background-color var(--d-fast) var(--ease);
+}
+.btn:hover {
+  --btn-bg: var(--paper-2);
+  transform: translateY(-1px);
+}
+/* Нажатие — как клавиша магнитофона: кнопка уходит вниз, тень исчезает. */
+.btn:active:not(:disabled) {
+  transform: translateY(2px);
+  filter: drop-shadow(0 0 0 rgb(0 0 0 / 0));
+}
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  --btn-ink: #6c675f;
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+.btn:disabled::before,
+.btn[aria-disabled="true"]::before {
+  background: repeating-linear-gradient(135deg, #c9c1b0 0 6px, #bdb5a3 6px 12px);
+}
+.btn-primary {
+  --btn-bg: var(--accent);
+  --btn-ink: var(--paper-2);
+  --torn: polygon(0 4%, 22% 1%, 50% 3.5%, 77% 0, 100% 2.5%, 99.3% 50%, 100% 97%, 66% 100%, 38% 96.5%, 9% 100%, 0.5% 97%, 0 48%);
+  min-height: var(--control-h-l);
+  padding: 0 var(--s-5);
+  font-family: var(--font-hand);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.btn-primary:hover {
+  --btn-bg: var(--accent-2);
+}
+.btn-ink {
+  --btn-bg: #111012;
+  --btn-ink: var(--paper);
+}
+.btn-ink:hover {
+  --btn-bg: #29272a;
+}
+.btn-quiet {
+  filter: none;
+  --btn-bg: transparent;
+  --btn-ink: currentColor;
+  padding: 0 var(--s-2);
+  font-weight: 500;
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+}
+.btn-quiet::before {
+  background: transparent;
+}
+.btn-quiet:hover {
+  --btn-bg: transparent;
+  text-decoration-color: currentColor;
+}
+
+/* Клавиши кассетной деки: серебристый пластик, нажатая клавиша утоплена. */
+.key {
+  display: inline-grid;
+  grid-auto-flow: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-2);
+  min-height: var(--control-h);
+  padding: 0 var(--s-4);
+  border: 1px solid #5d5b57;
+  border-radius: 3px;
+  background: linear-gradient(#d6d5cf, #a9a8a2);
+  color: #1b1a19;
+  font-size: var(--t-s);
+  font-weight: 600;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 3px 0 #4a4845,
+    0 5px 8px rgb(0 0 0 / 0.5);
+  transform: translateY(0);
+  transition:
+    transform var(--d-fast) var(--ease),
+    box-shadow var(--d-fast) var(--ease);
+}
+.key:hover {
+  background: linear-gradient(#e2e1db, #b4b3ad);
+}
+.key:active:not(:disabled),
+.key[aria-pressed="true"] {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 2px 3px rgb(0 0 0 / 0.35),
+    0 0 0 #4a4845,
+    0 1px 2px rgb(0 0 0 / 0.5);
+}
+.key[aria-pressed="true"] {
+  background: linear-gradient(#c3c2bc, #9d9c96);
+}
+.key:disabled {
+  color: #6f6d68;
+  background: repeating-linear-gradient(135deg, #a9a8a2 0 5px, #9b9a94 5px 10px);
+  cursor: not-allowed;
+}
+.key.rec {
+  background: linear-gradient(#c8423f, #9b1f1f);
+  color: var(--paper-2);
+  border-color: #521010;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.25),
+    0 3px 0 #4f1111,
+    0 5px 8px rgb(0 0 0 / 0.5);
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.6em;
+  padding: 0 0.35em;
+  border: 1px solid currentColor;
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 0.78em;
+  line-height: 1.5;
+  text-align: center;
+  opacity: 0.85;
+}
+
+.field {
+  display: grid;
+  gap: var(--s-1);
+  font-size: var(--t-s);
+  color: inherit;
+}
+.field input,
+.field select {
+  color-scheme: light;
+  min-height: var(--control-h);
+  padding: 0 var(--s-3);
+  border: 0;
+  border-bottom: 2px solid var(--ink);
+  border-radius: 2px 2px 0 0;
+  background: var(--paper-2);
+  color: var(--ink);
+  font-size: var(--t-m);
+  box-shadow: inset 0 1px 3px rgb(0 0 0 / 0.12);
+}
+.field input:hover,
+.field select:hover {
+  background: #fffaf0;
+}
+.field select:disabled {
+  color: var(--ink-3);
+  background: var(--sunken);
+}
+
+input[type="checkbox"] {
+  accent-color: var(--accent);
+}
+
+/* Записка на кнопке-гвоздике: спокойное сообщение. Ошибка — та же записка с вишнёвой печатью. */
+.notice {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3) var(--s-4);
+  border-radius: 1px;
+  background: var(--paper) var(--tex-paper);
+  color: var(--ink);
+  font-size: var(--t-s);
+  box-shadow: var(--shadow-sticker), 0 10px 18px -12px rgb(0 0 0 / 0.8);
+}
+.notice a {
+  color: var(--accent);
+  font-weight: 600;
+}
+.notice.error::before {
+  content: "!";
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  color: var(--accent);
+  font-family: var(--font-poster);
+  font-weight: 700;
+  font-size: var(--t-s);
+  transform: rotate(-8deg);
+}
+.notice.error {
+  box-shadow:
+    inset 3px 0 0 var(--accent),
+    var(--shadow-sticker),
+    0 10px 18px -12px rgb(0 0 0 / 0.8);
+}
+
+/* Вторичный текст: светлый на стене, тёмный на бумаге (бумажные поверхности задают --muted). */
+.muted {
+  color: var(--muted, var(--on-room-2));
+}
+.sheet,
+.note,
+.notice {
+  --muted: var(--ink-2);
+}
+.small {
+  font-size: var(--t-s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Сенсорные и небольшие экраны (не wide или грубый указатель): цели нажатия не меньше 44 px. */
+@media (pointer: coarse), not all and (min-width: 1100px) and (min-height: 521px) {
+  .btn,
+  .key,
+  .field input,
+  .field select {
+    min-height: var(--tap);
+  }
+  /* WebKit не применяет min-height к оформленному select: высота задаётся явно. */
+  .field select {
+    height: var(--tap);
+  }
+}
+
+/* Экран-сцена как на мокапе: предметы расставлены в процентах от окна (--x, --y, --w).
+   Абсолютная сцена только в раскладке wide; иначе (телефон, ландшафт телефона, планшет)
+   предметы выстраиваются в понятную последовательность, декор скрыт. */
+.scene {
+  position: relative;
+  min-width: 0;
+  /* Размеры шрифтов внутри сцены считаются от её ширины (cqi), а не от окна. */
+  container-type: inline-size;
+  height: calc(100svh - var(--chrome));
+  min-height: 0;
+}
+.at {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: var(--w, auto);
+  rotate: var(--r, 0deg);
+}
+.deco {
+  pointer-events: none;
+}
+@media not all and (min-width: 1100px) and (min-height: 521px) {
+  .scene {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--s-4);
+    height: auto;
+    min-height: 0;
+    padding-bottom: var(--s-6);
+  }
+  .scene .at {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: auto;
+    max-width: 100%;
+  }
+  .scene .deco {
+    display: none;
+  }
+}
+
+/* Курсор из perepev-locker: звезда, без отвлекающего шлейфа. */
+:root { --cursor-star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='26' height='26' viewBox='0 0 100 100'%3E%3Cpath d='M50 4l12.3 28.4 30.7 2.8-23.2 20.2 7 30L50 70.3 23.2 85.4l7-30L7 35.2l30.7-2.8z' fill='%23A81D1D' stroke='white' stroke-width='7'/%3E%3C/svg%3E") 13 13; }
+html, body, button:not(:disabled), a, summary, label, select { cursor: var(--cursor-star), pointer; }
+input, textarea { cursor: text; }
+button:disabled, [aria-disabled="true"] { cursor: not-allowed; }
+[hidden] { display: none !important; }
+html { background-image: none; }
+body { overflow-x: clip; }
+.scene { animation: room-arrival 200ms ease-out; }
+@keyframes room-arrival { from { opacity: .5; translate: 0 4px; } to { opacity: 1; translate: 0 0; } }
+.btn { transition: transform 130ms ease, box-shadow 130ms ease, background-color 130ms ease; }
+.btn:hover:not(:disabled) { transform: translateY(-2px) rotate(-.4deg); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: inset 0 2px 6px #0004; }
+@media (prefers-reduced-motion: reduce) { .scene { animation: none; } .btn:hover:not(:disabled), .btn:active:not(:disabled) { transform: none; } }
+
+html body :is(button, a, summary, label, select):not(:disabled) { cursor: var(--cursor-star), pointer !important; }

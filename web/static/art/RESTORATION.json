@@ -1,0 +1,754 @@
+{
+  "model": "realesrgan-x4plus",
+  "scale": 4,
+  "assets": [
+    {
+      "file": "backgrounds/01-home.webp",
+      "source": "backgrounds/png/01-home.png",
+      "source_sha256": "c6dc970f148470b1884365d0ea608605f9eb108c2d8793b00c713e125f384041",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/02-song-selection.webp",
+      "source": "backgrounds/png/02-song-selection.png",
+      "source_sha256": "c38d554daedc9724d94d6d3a1ad3ff122b6acbdbc4d37c40c89a96b435389a43",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/03-microphone-check.webp",
+      "source": "backgrounds/png/03-microphone-check.png",
+      "source_sha256": "7abfbd8d85e89181954a3bb5295f11791a7443eb18284c0588e6fbd93561ac63",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/04-performance.webp",
+      "source": "backgrounds/png/04-performance.png",
+      "source_sha256": "17bf2dc85d6c848c33578c8b3c9c3119477e92503026e61ab4d2122322c7dd3d",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/05-result.webp",
+      "source": "backgrounds/png/05-result.png",
+      "source_sha256": "165ce2242e6bf69e3854096782b0edc430ad8c05502e01a492dc4c0a924244ff",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/06-duel.webp",
+      "source": "backgrounds/png/06-duel.png",
+      "source_sha256": "bfc10c46ee215c26316d77bc0f2934d663577819301cba8acbb126174b31526e",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/07-leaderboard.webp",
+      "source": "backgrounds/png/07-leaderboard.png",
+      "source_sha256": "e16848c7903a43d1b8f6d5333b6e84d58b4f69a1782fd2996aa505230ceec2c0",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/08-progress.webp",
+      "source": "backgrounds/png/08-progress.png",
+      "source_sha256": "fd39ffa5fdd7ced514f7bd8b91defb5609a0118322e5d9184c5eb6ba10cf333a",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "backgrounds/09-empty-state.webp",
+      "source": "backgrounds/png/09-empty-state.png",
+      "source_sha256": "9e9738d4c87fd107ebc380b324c2d78c51286a4098237da03676a33aaa9b1027",
+      "source_size": [
+        1920,
+        1080
+      ],
+      "model_input_size": [
+        640,
+        360
+      ],
+      "output_size": [
+        2560,
+        1440
+      ]
+    },
+    {
+      "file": "branding/logo-main-s01.webp",
+      "source": "assets/png/branding/logo-main-s01.png",
+      "source_sha256": "eef92485620e2c8d4e893a2ab030feaac219e90316326f6fe8463e715ee48e53",
+      "source_size": [
+        481,
+        126
+      ],
+      "model_input_size": [
+        481,
+        126
+      ],
+      "output_size": [
+        1924,
+        504
+      ]
+    },
+    {
+      "file": "cassettes/cassette-black-s01.webp",
+      "source": "assets/png/cassettes/cassette-black-s01.png",
+      "source_sha256": "ba9485109c4760735ea7c94b0bcece02953bd6539f257c6846b9fb2c011da285",
+      "source_size": [
+        233,
+        145
+      ],
+      "model_input_size": [
+        233,
+        145
+      ],
+      "output_size": [
+        932,
+        580
+      ]
+    },
+    {
+      "file": "cassettes/cassette-blue-s03.webp",
+      "source": "assets/png/cassettes/cassette-blue-s03.png",
+      "source_sha256": "98290b7f607bfbe63944a01461a7a9be5cb20a4cbedb1f6bd6b3eae43307c645",
+      "source_size": [
+        234,
+        135
+      ],
+      "model_input_size": [
+        234,
+        135
+      ],
+      "output_size": [
+        936,
+        540
+      ]
+    },
+    {
+      "file": "cassettes/cassette-clear-s01.webp",
+      "source": "assets/png/cassettes/cassette-clear-s01.png",
+      "source_sha256": "168f95749dbab3915a12252ef327cdd9dcf27163d0709133991219926d40984c",
+      "source_size": [
+        231,
+        145
+      ],
+      "model_input_size": [
+        231,
+        145
+      ],
+      "output_size": [
+        924,
+        580
+      ]
+    },
+    {
+      "file": "cassettes/cassette-red-s01.webp",
+      "source": "assets/png/cassettes/cassette-red-s01.png",
+      "source_sha256": "3b08d30cc4bf369e662f4475894e5d0f7cdc2715e3e4459ad7831576fd956686",
+      "source_size": [
+        228,
+        141
+      ],
+      "model_input_size": [
+        228,
+        141
+      ],
+      "output_size": [
+        912,
+        564
+      ]
+    },
+    {
+      "file": "devices/boombox-s02.webp",
+      "source": "assets/png/devices/boombox-s02.png",
+      "source_sha256": "8fedf1ba985e4905350953a2a502c867f808820281d15811b8213271c5870a04",
+      "source_size": [
+        130,
+        92
+      ],
+      "model_input_size": [
+        130,
+        92
+      ],
+      "output_size": [
+        520,
+        368
+      ]
+    },
+    {
+      "file": "doodles/note-pair-s01.webp",
+      "source": "assets/png/doodles/note-pair-s01.png",
+      "source_sha256": "69993448864309b8627a81075c4cc1cdc4257a6aa0b82c329f25b95f17e3dce6",
+      "source_size": [
+        52,
+        50
+      ],
+      "model_input_size": [
+        52,
+        50
+      ],
+      "output_size": [
+        208,
+        200
+      ]
+    },
+    {
+      "file": "hardware/binder-clip-s03.webp",
+      "source": "assets/png/hardware/binder-clip-s03.png",
+      "source_sha256": "88194acb4dedd8ef53c93f00f0e5e391b13a5e56b7786cf556d860d1920cda39",
+      "source_size": [
+        77,
+        109
+      ],
+      "model_input_size": [
+        77,
+        109
+      ],
+      "output_size": [
+        308,
+        436
+      ]
+    },
+    {
+      "file": "hardware/paperclip-s02.webp",
+      "source": "assets/png/hardware/paperclip-s02.png",
+      "source_sha256": "481790425458696b2a38fee6fc663084d263cf291c7475e40ecf30a6aedb0320",
+      "source_size": [
+        41,
+        93
+      ],
+      "model_input_size": [
+        41,
+        93
+      ],
+      "output_size": [
+        164,
+        372
+      ]
+    },
+    {
+      "file": "mascots/cat-dance-s03.webp",
+      "source": "assets/png/mascots/cat-dance-s03.png",
+      "source_sha256": "574371508d690fa2569b173ffa609ffdbe3c1d777c3d87108d0bda532baff0b7",
+      "source_size": [
+        124,
+        173
+      ],
+      "model_input_size": [
+        124,
+        173
+      ],
+      "output_size": [
+        496,
+        692
+      ]
+    },
+    {
+      "file": "mascots/cat-empty-s03.webp",
+      "source": "assets/png/mascots/cat-empty-s03.png",
+      "source_sha256": "48a7b065b67f64f478c3ef571b720fa02b7fca66c24e9f6a8561844ebade8860",
+      "source_size": [
+        222,
+        142
+      ],
+      "model_input_size": [
+        222,
+        142
+      ],
+      "output_size": [
+        888,
+        568
+      ]
+    },
+    {
+      "file": "mascots/cat-encouragement-s03.webp",
+      "source": "assets/png/mascots/cat-encouragement-s03.png",
+      "source_sha256": "dac7584455e9491b0406c40a691755deedb15efcb18923644a61d24d7bbfebe4",
+      "source_size": [
+        139,
+        159
+      ],
+      "model_input_size": [
+        139,
+        159
+      ],
+      "output_size": [
+        556,
+        636
+      ]
+    },
+    {
+      "file": "mascots/cat-guitar-s03.webp",
+      "source": "assets/png/mascots/cat-guitar-s03.png",
+      "source_sha256": "84ebe2c91a010cf53e70467dcd64652168f26bf8599befbea3300e0e75c866dc",
+      "source_size": [
+        183,
+        188
+      ],
+      "model_input_size": [
+        183,
+        188
+      ],
+      "output_size": [
+        732,
+        752
+      ]
+    },
+    {
+      "file": "mascots/cat-laptop-s03.webp",
+      "source": "assets/png/mascots/cat-laptop-s03.png",
+      "source_sha256": "f8543f46a0d1c655251889e6752372e930a901fbdb4f05c9683a9141a6b69ab7",
+      "source_size": [
+        210,
+        133
+      ],
+      "model_input_size": [
+        210,
+        133
+      ],
+      "output_size": [
+        840,
+        532
+      ]
+    },
+    {
+      "file": "mascots/cat-listen-s01.webp",
+      "source": "assets/png/mascots/cat-listen-s01.png",
+      "source_sha256": "cef4a5afe2ab1577594579a51f1fb1b8420fa5152edd5a8d0c1a94b46763ca5f",
+      "source_size": [
+        132,
+        151
+      ],
+      "model_input_size": [
+        132,
+        151
+      ],
+      "output_size": [
+        528,
+        604
+      ]
+    },
+    {
+      "file": "mascots/cat-paw-up-s01.webp",
+      "source": "assets/png/mascots/cat-paw-up-s01.png",
+      "source_sha256": "8514c5bddbdd4e7f869a65f1e42049a499166f24af83c9059730351d0b1a9d48",
+      "source_size": [
+        146,
+        137
+      ],
+      "model_input_size": [
+        146,
+        137
+      ],
+      "output_size": [
+        584,
+        548
+      ]
+    },
+    {
+      "file": "mascots/cat-sing-s01.webp",
+      "source": "assets/png/mascots/cat-sing-s01.png",
+      "source_sha256": "b1d59f1560338f030f8aba8dee99ca39356f6ad75059e1484db7e2ef5da6c958",
+      "source_size": [
+        183,
+        203
+      ],
+      "model_input_size": [
+        183,
+        203
+      ],
+      "output_size": [
+        732,
+        812
+      ]
+    },
+    {
+      "file": "mascots/cat-sing-s02.webp",
+      "source": "assets/png/mascots/cat-sing-s02.png",
+      "source_sha256": "03342551991a55e326b686066ead3de0b7b5e1971a1b1da9bdfb3e192da58b09",
+      "source_size": [
+        227,
+        207
+      ],
+      "model_input_size": [
+        227,
+        207
+      ],
+      "output_size": [
+        908,
+        828
+      ]
+    },
+    {
+      "file": "mascots/cat-sing-sitting-s03.webp",
+      "source": "assets/png/mascots/cat-sing-sitting-s03.png",
+      "source_sha256": "bcf6e38ede0c453ceac5043d3e3ba9f174bf5955234e3837587e03b8088b2f68",
+      "source_size": [
+        132,
+        185
+      ],
+      "model_input_size": [
+        132,
+        185
+      ],
+      "output_size": [
+        528,
+        740
+      ]
+    },
+    {
+      "file": "mascots/cat-sleep-s01.webp",
+      "source": "assets/png/mascots/cat-sleep-s01.png",
+      "source_sha256": "238bc4e7e7dddd8feaf21faba37c1219e6c58e1c5618eff84b5e5b3307aab869",
+      "source_size": [
+        277,
+        125
+      ],
+      "model_input_size": [
+        277,
+        125
+      ],
+      "output_size": [
+        1108,
+        500
+      ]
+    },
+    {
+      "file": "mascots/cat-sleep-s02.webp",
+      "source": "assets/png/mascots/cat-sleep-s02.png",
+      "source_sha256": "9067d0bd56f215d0080a0e8631b2e91ddc10c52c285af123c0431bcb9fe1c893",
+      "source_size": [
+        249,
+        155
+      ],
+      "model_input_size": [
+        249,
+        155
+      ],
+      "output_size": [
+        996,
+        620
+      ]
+    },
+    {
+      "file": "music/cassette-stack-s01.webp",
+      "source": "assets/png/music/cassette-stack-s01.png",
+      "source_sha256": "df6327983c2d20448effafdfdc26be52456aab6d56a1ec0ce97cdec7d4e26bd3",
+      "source_size": [
+        229,
+        163
+      ],
+      "model_input_size": [
+        229,
+        163
+      ],
+      "output_size": [
+        916,
+        652
+      ]
+    },
+    {
+      "file": "music/compact-disc-s01.webp",
+      "source": "assets/png/music/compact-disc-s01.png",
+      "source_sha256": "716c58f8688d7ee45e90663cc45996dedf75496cfd9f6e609388ac84efac8ffc",
+      "source_size": [
+        154,
+        157
+      ],
+      "model_input_size": [
+        154,
+        157
+      ],
+      "output_size": [
+        616,
+        628
+      ]
+    },
+    {
+      "file": "music/headphones-s01.webp",
+      "source": "assets/png/music/headphones-s01.png",
+      "source_sha256": "88a1f8f4b7c71b499655221f6c69af783b79c820c18f2a964612de3f42bedf1a",
+      "source_size": [
+        123,
+        147
+      ],
+      "model_input_size": [
+        123,
+        147
+      ],
+      "output_size": [
+        492,
+        588
+      ]
+    },
+    {
+      "file": "music/microphone-cable-s01.webp",
+      "source": "assets/png/music/microphone-cable-s01.png",
+      "source_sha256": "c2d3f552b35056e44abcc6a735439d40cf8cd9efcce1f8d35af7632f8d9409e0",
+      "source_size": [
+        92,
+        139
+      ],
+      "model_input_size": [
+        92,
+        139
+      ],
+      "output_size": [
+        368,
+        556
+      ]
+    },
+    {
+      "file": "music/vinyl-photo-stack-s03.webp",
+      "source": "assets/png/music/vinyl-photo-stack-s03.png",
+      "source_sha256": "81439580c86caeabf2f589d988f88f91a7a42e9a6112db26725bf336bee9be0c",
+      "source_size": [
+        454,
+        252
+      ],
+      "model_input_size": [
+        454,
+        252
+      ],
+      "output_size": [
+        1816,
+        1008
+      ]
+    },
+    {
+      "file": "paper/notebook-ruled-s03.webp",
+      "source": "assets/png/paper/notebook-ruled-s03.png",
+      "source_sha256": "a6d6ef8878e4ce5756328114f07056aa7c2922db4fe4a97af46b359b3d065ecf",
+      "source_size": [
+        209,
+        280
+      ],
+      "model_input_size": [
+        209,
+        280
+      ],
+      "output_size": [
+        836,
+        1120
+      ]
+    },
+    {
+      "file": "paper/paper-kraft-layered-s03.webp",
+      "source": "assets/png/paper/paper-kraft-layered-s03.png",
+      "source_sha256": "ad92d575c79e508f32864a68ff2ec38f54081804be6e975918438e0652033b4b",
+      "source_size": [
+        253,
+        187
+      ],
+      "model_input_size": [
+        253,
+        187
+      ],
+      "output_size": [
+        1012,
+        748
+      ]
+    },
+    {
+      "file": "paper/paper-long-strip-s01.webp",
+      "source": "assets/png/paper/paper-long-strip-s01.png",
+      "source_sha256": "98518dc6b775d205fd467825b36cd9f39923709753216506e8af54484048b5c7",
+      "source_size": [
+        177,
+        55
+      ],
+      "model_input_size": [
+        177,
+        55
+      ],
+      "output_size": [
+        708,
+        220
+      ]
+    },
+    {
+      "file": "paper/paper-torn-strip-s01.webp",
+      "source": "assets/png/paper/paper-torn-strip-s01.png",
+      "source_sha256": "c155073ac7d276f32fc6ad278ffe6ecfec46c26337e73eaff9429b31e2f5c511",
+      "source_size": [
+        134,
+        75
+      ],
+      "model_input_size": [
+        134,
+        75
+      ],
+      "output_size": [
+        536,
+        300
+      ]
+    },
+    {
+      "file": "paper/tape-gray-s01.webp",
+      "source": "assets/png/paper/tape-gray-s01.png",
+      "source_sha256": "53047032c0161ffffcdafeff60785f7b37b50dc8e71591181601936111c877e6",
+      "source_size": [
+        98,
+        49
+      ],
+      "model_input_size": [
+        98,
+        49
+      ],
+      "output_size": [
+        392,
+        196
+      ]
+    },
+    {
+      "file": "stickers/star-black-s03.webp",
+      "source": "assets/png/stickers/star-black-s03.png",
+      "source_sha256": "0d478de450ce4566948a3624fb19ad3136d1b7fb004abdc0f7f2d42d80ff9b6e",
+      "source_size": [
+        106,
+        105
+      ],
+      "model_input_size": [
+        106,
+        105
+      ],
+      "output_size": [
+        424,
+        420
+      ]
+    },
+    {
+      "file": "stickers/star-cream-outline-s01.webp",
+      "source": "assets/png/stickers/star-cream-outline-s01.png",
+      "source_sha256": "39b3e8cac20bb671da62618a7103c7cc983cdef59d92abb6e1b9051fb3b75ca9",
+      "source_size": [
+        73,
+        91
+      ],
+      "model_input_size": [
+        73,
+        91
+      ],
+      "output_size": [
+        292,
+        364
+      ]
+    },
+    {
+      "file": "stickers/star-red-distressed-s02.webp",
+      "source": "assets/png/stickers/star-red-distressed-s02.png",
+      "source_sha256": "0a24eb50256c2c4517836652c28f7711a0cff4a07de9fbfc208c4ee39420a377",
+      "source_size": [
+        125,
+        123
+      ],
+      "model_input_size": [
+        125,
+        123
+      ],
+      "output_size": [
+        500,
+        492
+      ]
+    },
+    {
+      "file": "stickers/star-spiral-s01.webp",
+      "source": "assets/png/stickers/star-spiral-s01.png",
+      "source_sha256": "1c471bb932bfa4e9a975b0bc66dd668414e45e348ec66dc3540df69d7091f18a",
+      "source_size": [
+        138,
+        137
+      ],
+      "model_input_size": [
+        138,
+        137
+      ],
+      "output_size": [
+        552,
+        548
+      ]
+    }
+  ]
+}

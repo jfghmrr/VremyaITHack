@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Summary",
+  "type": "object",
+  "properties": {
+    "calibrating": {
+      "type": "boolean"
+    },
+    "calibrationTotal": {
+      "type": "integer",
+      "format": "int32"
+    },
+    "mmr": {
+      "description": "MMR, округлённый для отображения.",
+      "type": "integer",
+      "format": "int64"
+    },
+    "protected": {
+      "type": "boolean"
+    },
+    "rank": {
+      "description": "Ранг показывается только после калибровки.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ratedMatches": {
+      "type": "integer",
+      "format": "int32"
+    }
+  },
+  "required": [
+    "mmr",
+    "ratedMatches",
+    "calibrationTotal",
+    "calibrating",
+    "protected"
+  ]
+}

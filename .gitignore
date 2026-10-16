@@ -1,14 +1,20 @@
+target/
 node_modules/
-dist/
-work/
+test-results/
 .DS_Store
-*.tsbuildinfo
+backups/
 .venv/
+tools/songs/cache/
 
+__pycache__/
+*.py[cod]
+
+.presentation-build/
+
+# Локальные журналы, снимки и временная тестовая среда
+work/
+
+# Локальные настройки; пример входит в переносимый комплект.
 .env
 .env.*
 !.env.example
-data/
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal

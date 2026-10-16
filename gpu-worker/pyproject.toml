@@ -1,0 +1,55 @@
+[project]
+name = "perepev-worker"
+version = "0.1.0"
+description = "Perepev GPU worker: vocal separation, melody, sung words and speaker-bleed check"
+requires-python = ">=3.12,<3.13"
+license = "MIT"
+# Exact versions resolved on 2026-10-16. torch/torchaudio come from the extras below.
+dependencies = [
+  "demucs==4.1.0",
+  "torchcrepe==0.0.24",
+  "openai-whisper==20250625",
+  "soundfile==0.14.0",
+  "numpy==2.5.4",
+  "scipy==1.18.1",
+  "rapidfuzz==3.14.6",
+  "httpx==0.28.1",
+]
+
+[project.optional-dependencies]
+# Mac / CPU testing and catalog stems: default PyPI wheels. The worker never uses Apple MPS (runtime.device).
+cpu = ["torch==2.11.0", "torchaudio==2.11.0"]
+# Windows GPU PC (RTX 3070 Ti): official PyTorch CUDA 12.8 wheels.
+cuda = ["torch==2.11.0", "torchaudio==2.11.0"]
+
+[dependency-groups]
+dev = ["pytest==9.1.1"]
+
+[tool.uv]
+# Scripts run from this folder (`python -m perepev_worker.…`); nothing to build.
+package = false
+conflicts = [[{ extra = "cpu" }, { extra = "cuda" }]]
+# Apple Silicon Mac (tests, catalog stems), Windows GPU PC, Linux x86-64.
+environments = [
+  "sys_platform == 'darwin' and platform_machine == 'arm64'",
+  "sys_platform == 'win32' and platform_machine == 'AMD64'",
+  "sys_platform == 'linux' and platform_machine == 'x86_64'",
+]
+
+[tool.uv.sources]
+torch = [
+  { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+torchaudio = [
+  { index = "pytorch-cu128", extra = "cuda", marker = "sys_platform == 'win32' or sys_platform == 'linux'" },
+]
+
+[[tool.uv.index]]
+name = "pytorch-cu128"
+url = "https://download.pytorch.org/whl/cu128"
+explicit = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["models: needs downloaded ML models (slow; CPU is fine)"]

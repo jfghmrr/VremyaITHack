@@ -1,0 +1,17 @@
+Графика предоставлена пользователем: perepev-design-kit 2. Вырезки и фоны локально восстановлены с его разрешения; исходный набор не изменён.
+Фоны набора — отдельные композиции, не скрытые слои фото-референса.
+Музыка из референса не добавлялась. Обложки доступных песен рисуются кодом; изображения на фонах и декоративных вырезках остаются частью предоставленного владельцем набора.
+Отдельная лицензия на графику в наборе не указана; MIT-лицензия кода не распространяется на эти материалы автоматически.
+Оценки, текст песен, кнопки и показания приборов рисуются кодом из фактических данных.
+
+15.10.2026: дверцы Locker.svelte реализованы HTML/CSS/SVG по предоставленному perepev-locker.html. Фотографии lockers/ сохранены в наборе, но компонент больше их не растягивает. Исправленная подпись главной страницы — живой текст на бумажной подложке, а не tagline-s01.webp.
+
+15.10.2026: после недоступности image_gen владелец явно разрешил локальный ML-апскейл. Обработаны 44 изображения (включая 9 фонов) моделью realesrgan-x4plus, масштаб x4, официальный Real-ESRGAN ncnn Vulkan, macOS release 20220424. Фоновые холсты 1920×1080 сначала уменьшены до 640×360: большие исходные экспорты уже были интерполяцией маленьких фрагментов. Итоговые фоны — 2560×1440, композиция сохранена. Вырезки обработаны из оригинальных PNG с прозрачностью. Экспорт WebP quality=93, alpha_quality=100.
+Проект инструмента: https://github.com/xinntao/Real-ESRGAN (BSD-3-Clause, Copyright 2021 Xintao Wang). Инструмент и веса не входят в сайт; дополнительный ML в браузере не запускается, изображения на внешние сервисы не отправлялись.
+Параметры, размеры и SHA-256 источников — RESTORATION.json. Воспроизводимый скрипт — tools/art/restore_assets.py. Восстановление не гарантирует достоверность мелких деталей исходной сцены и не создаёт новых прав на исходную графику.
+
+16 October 2026 — additional generated assets
+- furniture/armchair.webp: newly generated transparent illustration. Prompt: front-facing worn burgundy leather armchair, slightly turned right, full short legs, aged paper-cut edge, detailed creases and stitching, scrapbook music-room style; no cat, lamp, text or background.
+- backgrounds/home-no-lamp.webp: edit of the restored owner's home background. Prompt: remove only the desk lamp and its light, reconstruct the wall and furniture behind it, preserve all other objects and the room composition, retain sharp textures and the dark scrapbook style.
+Generated with the image generation tool, then exported to WebP quality 95 with transparency preserved for the chair. Original generated PNGs remain in the local image-generation output folder; these WebP files are the website assets. The restore_assets.py batch excludes both generated assets.
+The owner's supplied visual materials are not automatically relicensed as MIT.

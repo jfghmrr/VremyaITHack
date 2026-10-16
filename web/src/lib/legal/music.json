@@ -1,0 +1,177 @@
+[
+  {
+    "id": "ode",
+    "title": "Ода к радости",
+    "artist": "Людвиг ван Бетховен · 1824",
+    "origin": "Ноты набраны вручную, синтез и аранжировка созданы в проекте (MIT).",
+    "link": null
+  },
+  {
+    "id": "star",
+    "title": "Маленькая звезда",
+    "artist": "Французская мелодия · XVIII век",
+    "origin": "Ноты набраны вручную, синтез и аранжировка созданы в проекте (MIT).",
+    "link": null
+  },
+  {
+    "id": "volga",
+    "title": "Эй, ухнем!",
+    "artist": "Русская народная · запись М. Балакирева, 1866",
+    "origin": "Исходная запись MIDI: Melody: Mily Balakirev; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AEj%2C_uchnem%21.mid"
+  },
+  {
+    "id": "troika",
+    "title": "Вот мчится тройка",
+    "artist": "Русская народная мелодия",
+    "origin": "Исходная запись MIDI: Melody: from Russia; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3ASeht_ihr_drei_Rosse_%28Troika%29.mid"
+  },
+  {
+    "id": "korobeiniki",
+    "title": "Коробейники",
+    "artist": "Русская народная · стихи Н. Некрасова, 1861",
+    "origin": "Общеизвестная мелодия записана нотами вручную, аккомпанемент построен по гармонии в проекте (MIT).",
+    "link": null
+  },
+  {
+    "id": "silent-night",
+    "title": "Тихая ночь",
+    "artist": "Франц Грубер · 1818",
+    "origin": "Исходная запись MIDI: Melodie: Franz Xaver Gruber 1818; Satz und Tondatei: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AStille_Nacht%2C_heilige_Nacht.mid"
+  },
+  {
+    "id": "jingle-bells",
+    "title": "Бубенцы (Jingle Bells)",
+    "artist": "Джеймс Пирпонт · 1857",
+    "origin": "Исходная запись MIDI: Melody: James L. Pierpont 1857; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AJingle_Bells.mid"
+  },
+  {
+    "id": "tannenbaum",
+    "title": "О, ёлочка (O Tannenbaum)",
+    "artist": "Немецкая народная мелодия",
+    "origin": "Исходная запись MIDI: Melodie: trad.; Satz und Tondatei: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AO_Tannenbaum.mid"
+  },
+  {
+    "id": "auld-lang-syne",
+    "title": "Старая дружба (Auld Lang Syne)",
+    "artist": "Шотландская народная мелодия",
+    "origin": "Общеизвестная мелодия записана нотами вручную, аккомпанемент построен по гармонии в проекте (MIT).",
+    "link": null
+  },
+  {
+    "id": "happy-birthday",
+    "title": "С днём рождения",
+    "artist": "Милдред и Патти Хилл · 1893",
+    "origin": "Исходная запись MIDI: Tune: trad.; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия Public domain.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AHappy_birthday_to_you_%28Zum_Geburtstag_viel_Gl%C3%BCck%29.mid"
+  },
+  {
+    "id": "frere-jacques",
+    "title": "Братец Яков (Frère Jacques)",
+    "artist": "Французская народная · XVIII век",
+    "origin": "Исходная запись MIDI: Melody: from France; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AFr%C3%A8re_Jacques_%28pg%29.mid"
+  },
+  {
+    "id": "alouette",
+    "title": "Алуэтт (Alouette)",
+    "artist": "Франко-канадская народная песня",
+    "origin": "Исходная запись MIDI: Melody: from France; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AAlouette.mid"
+  },
+  {
+    "id": "lullaby",
+    "title": "Колыбельная",
+    "artist": "Иоганнес Брамс · 1868",
+    "origin": "Исходная запись MIDI: Melodie: Johannes Brahms; Satz und Tondatei: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AGuten_Abend%2C_gut_Nacht_%28Wiegenlied%29.mid"
+  },
+  {
+    "id": "ode-joy-full",
+    "title": "Ода к радости (хор)",
+    "artist": "Людвиг ван Бетховен · 1824",
+    "origin": "Исходная запись MIDI: Melody: Beethoven; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AFreude%2C_sch%C3%B6ner_G%C3%B6tterfunken.mid"
+  },
+  {
+    "id": "santa-lucia",
+    "title": "Санта Лючия",
+    "artist": "Теодоро Коттрау · 1849",
+    "origin": "Исходная запись MIDI: Melody: Napoli, popular; setting & sound file Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3ASanta_Lucia.mid"
+  },
+  {
+    "id": "funiculi",
+    "title": "Фуникули-фуникула",
+    "artist": "Луиджи Денца · 1880",
+    "origin": "Исходная запись MIDI: Melody: Luigi Denza (1846-1922); setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AFunicul%C3%AC_funicul%C3%A0.mid"
+  },
+  {
+    "id": "scarborough",
+    "title": "Ярмарка в Скарборо",
+    "artist": "Английская народная баллада",
+    "origin": "Исходная запись MIDI: Melody: traditional; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AScarborough_Fair_%28ballad%29.mid"
+  },
+  {
+    "id": "danny-boy",
+    "title": "Лондондеррийский напев (Danny Boy)",
+    "artist": "Ирландская народная мелодия",
+    "origin": "Исходная запись MIDI: Melody: Irish trad.; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AThe_Londonderry_Air.mid"
+  },
+  {
+    "id": "amazing-grace",
+    "title": "О, благодать (Amazing Grace)",
+    "artist": "Американская мелодия · 1829",
+    "origin": "Исходная запись MIDI: Melody: trad.; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AAmazing_grace_%28org%29.mid"
+  },
+  {
+    "id": "my-bonnie",
+    "title": "Мой Бонни (My Bonnie)",
+    "artist": "Шотландская народная песня",
+    "origin": "Исходная запись MIDI: Melody: traditional; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AMy_Bonnie_is_over_the_Ocean.mid"
+  },
+  {
+    "id": "clementine",
+    "title": "Клементина",
+    "artist": "Американская народная песня · 1884",
+    "origin": "Исходная запись MIDI: Melody: trad.; setting & sound file Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AO_My_Darling_Clementine.mid"
+  },
+  {
+    "id": "saints",
+    "title": "Когда святые маршируют",
+    "artist": "Американская народная песня",
+    "origin": "Исходная запись MIDI: Melody: trad.; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3AWhen_The_Saints.mid"
+  },
+  {
+    "id": "cucaracha",
+    "title": "Кукарача",
+    "artist": "Мексиканская народная песня",
+    "origin": "Исходная запись MIDI: Melody: from Spain; setting & sound file: Rabanus Flavus (Peter Gerloff), Wikimedia Commons, лицензия CC0.",
+    "link": "https://commons.wikimedia.org/wiki/File%3ALa_Cucaracha_%28pg%29.mid"
+  },
+  {
+    "id": "kalinka-words",
+    "title": "Калинка",
+    "artist": "Русская песня · XIX век",
+    "origin": "Старинные мелодия и текст; ноты и разметка слов набраны вручную. Новая аранжировка и синтез созданы в проекте (MIT).",
+    "link": "https://ru.wikisource.org/wiki/Калинка"
+  },
+  {
+    "id": "berezka-words",
+    "title": "Во поле берёза стояла",
+    "artist": "Русская песня · XIX век",
+    "origin": "Старинные мелодия и текст; ноты и разметка слов набраны вручную. Новая аранжировка и синтез созданы в проекте (MIT).",
+    "link": "https://ru.wikisource.org/wiki/Во_поле_берёза_стояла/Римский-Корсаков_(СО)"
+  }
+]

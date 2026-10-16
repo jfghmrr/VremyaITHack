@@ -1,0 +1,39 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "HTTP API и WebSocket Перепева: модульный монолит"
+
+[[bin]]
+name = "perepev-api"
+path = "src/main.rs"
+
+[dependencies]
+scoring-core = { path = "../scoring-core", features = ["schema"] }
+axum = { version = "0.8.9", features = ["ws", "macros"] }
+tokio = { version = "1.53.3", features = ["full"] }
+sqlx = { version = "0.9.0", features = ["runtime-tokio", "postgres", "sqlite", "migrate", "uuid", "time", "json"] }
+redis = { version = "1.7.1", features = ["tokio-comp", "connection-manager", "script", "streams"] }
+serde.workspace = true
+serde_json.workspace = true
+tower-http = { version = "0.7.1", features = ["trace", "limit"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter", "json"] }
+uuid = { version = "1.28.0", features = ["v4", "serde"] }
+time = { version = "0.3.55", features = ["serde", "formatting", "parsing", "macros"] }
+scrypt = { version = "0.12.0", default-features = false }
+sha2 = "0.11.1"
+hex = "0.4.3"
+rand = "0.10.3"
+subtle = "2.6"
+thiserror = "2.0.21"
+anyhow = "1.0.104"
+futures-util = "0.3.34"
+schemars = { version = "1.2.3", features = ["uuid1"] }
+# Обмен кода у Яндекс ID и VK ID; TLS через rustls, без OpenSSL.
+reqwest = { version = "0.13.5", default-features = false, features = ["rustls", "json", "form"] }
+
+[dev-dependencies]
+tokio-tungstenite = "0.30.0"

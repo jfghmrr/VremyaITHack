@@ -1,24 +1,85 @@
+# Локальный запуск: docker compose up --build -d  →  http://localhost:8080
+# Два экземпляра API: docker compose up --build -d --scale api=2
 name: perepev
+
 services:
-  website:
-    build:
-      context: .
-      target: website
+  web:
+    build: { context: ., target: web }
     ports:
       - "127.0.0.1:${PEREPEV_PORT:-8080}:80"
-    depends_on:
-      api:
-        condition: service_healthy
-    restart: unless-stopped
-  api:
-    build:
-      context: .
-      target: api
     environment:
-      APP_ORIGINS: "http://localhost:${PEREPEV_PORT:-8080},http://127.0.0.1:${PEREPEV_PORT:-8080}"
-      COOKIE_SECURE: "false"
+      SITE_ADDRESS: ${SITE_ADDRESS:-:80}
     volumes:
-      - accounts:/data
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
     restart: unless-stopped
+
+  api:
+    build: { context: ., target: api }
+    environment:
+      DATABASE_URL: postgres://perepev:${POSTGRES_PASSWORD:-perepev-local-only}@postgres:5432/perepev
+      VALKEY_URL: redis://valkey:6379
+      APP_ORIGINS: ${APP_ORIGINS:-http://localhost:8080,http://127.0.0.1:8080}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: "true"
+      # Вход через Яндекс ID и VK ID (docs/oauth-setup.md); пустые значения — кнопки скрыты.
+      YANDEX_CLIENT_ID: ${YANDEX_CLIENT_ID:-}
+      YANDEX_CLIENT_SECRET: ${YANDEX_CLIENT_SECRET:-}
+      VK_CLIENT_ID: ${VK_CLIENT_ID:-}
+      VK_CLIENT_SECRET: ${VK_CLIENT_SECRET:-}
+      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-}
+      # SHA-256 токена GPU-обработчика; сам токен хранится только у обработчика.
+      # Пусто — маршруты /api/worker отвечают 401, POST /api/perf — 503 (голос не принимается).
+      WORKER_TOKEN_SHA256: ${WORKER_TOKEN_SHA256:-}
+      # Сколько секунд после конца пения ждать точную оценку, затем остаётся балл браузера.
+      # Держи заметно меньше 7 минут: запись голоса удаляется не позже чем через 10.
+      PERF_DEADLINE_S: ${PERF_DEADLINE_S:-20}
+      # Исполнений для точной оценки в час с одного адреса (жюри сидит за одним NAT площадки).
+      PERF_LIMIT_PER_HOUR: ${PERF_LIMIT_PER_HOUR:-300}
+    # Приватные файлы: записи исполнений (до 10 минут) и свои треки (до 24 часов).
+    # Общий том для всех экземпляров при --scale api=2.
+    volumes:
+      - data:/data
+    depends_on:
+      postgres: { condition: service_healthy }
+      valkey: { condition: service_healthy }
+    restart: unless-stopped
+
+  # Базы доступны только внутри сети compose: портов наружу нет.
+  postgres:
+    image: postgres:18.6-trixie
+    environment:
+      POSTGRES_USER: perepev
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-perepev-local-only}
+      POSTGRES_DB: perepev
+    volumes:
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U perepev -d perepev"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  valkey:
+    image: valkey/valkey:9.1.2-trixie
+    # Временное состояние: очередь, присутствие, потоки матчей. AOF переживает перезапуск,
+    # но окончательные данные всё равно в PostgreSQL.
+    command: ["valkey-server", "--appendonly", "yes", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - valkey:/data
+    healthcheck:
+      test: ["CMD", "valkey-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
 volumes:
-  accounts:
+  postgres:
+  valkey:
+  data:
+  caddy_data:
+  caddy_config:

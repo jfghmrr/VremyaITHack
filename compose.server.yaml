@@ -1,0 +1,21 @@
+# Общий сервер с доменом и HTTPS (Caddy получает сертификат сам):
+#   cp deploy/server.env.example .env  # заполнить домен и пароль
+#   docker compose -f compose.yaml -f compose.server.yaml up --build -d
+# Не публикуйте сервер, пока не прочитаны разделы README «Общий сервер» и «Резервные копии».
+services:
+  web:
+    ports: !override
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      SITE_ADDRESS: ${SITE_DOMAIN:?укажи SITE_DOMAIN в .env}
+      # Клиенты приходят к Caddy напрямую: X-Forwarded-For ни от кого не принимается.
+      CADDY_TRUSTED_PROXIES: ""
+  api:
+    environment:
+      APP_ORIGINS: https://${SITE_DOMAIN:?укажи SITE_DOMAIN в .env}
+      COOKIE_SECURE: "true"
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?укажи POSTGRES_PASSWORD в .env}

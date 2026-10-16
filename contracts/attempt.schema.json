@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AttemptIn",
+  "description": "Тело `POST /api/attempts`. Поля проверяет сервер; неверное значение — 400.",
+  "type": "object",
+  "properties": {
+    "algorithm": {
+      "description": "`\"precise-1\"`, если итог посчитан точной оценкой на сервере; без поля — балл браузера.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "algorithmVersion": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "int32"
+    },
+    "axes": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": true
+    },
+    "id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "moments": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "$ref": "#/$defs/MomentIn"
+      }
+    },
+    "owner": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "score": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "format": "double"
+    },
+    "shift": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "format": "double"
+    },
+    "songId": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "title": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "wordsChecked": {
+      "description": "Слова проверены (только при точной оценке).",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    }
+  },
+  "$defs": {
+    "MomentIn": {
+      "description": "Момент разбора попытки (не больше трёх).",
+      "type": "object",
+      "properties": {
+        "end_s": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "loss": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "phrase": true,
+        "reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "start_s": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "text": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Friends",
+  "type": "object",
+  "properties": {
+    "friends": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Friend"
+      }
+    },
+    "incoming": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Friend"
+      }
+    },
+    "outgoing": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Friend"
+      }
+    }
+  },
+  "required": [
+    "friends",
+    "incoming",
+    "outgoing"
+  ],
+  "$defs": {
+    "Friend": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "name": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ]
+    }
+  }
+}

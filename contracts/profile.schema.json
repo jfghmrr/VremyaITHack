@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Profile",
+  "type": "object",
+  "properties": {
+    "email": {
+      "description": "null, если кабинет создан входом через Яндекс ID или VK ID.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hasPassword": {
+      "description": "false — изменения подтверждаются словом «УДАЛИТЬ» вместо пароля.",
+      "type": "boolean"
+    },
+    "id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "name": {
+      "type": "string"
+    },
+    "providers": {
+      "description": "Привязанные внешние входы: \"yandex\", \"vk\".",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "id",
+    "email",
+    "name",
+    "hasPassword",
+    "providers"
+  ]
+}

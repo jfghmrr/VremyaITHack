@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SongInfo",
+  "type": "object",
+  "properties": {
+    "artist": {
+      "type": "string"
+    },
+    "category": {
+      "description": "Раздел каталога: «Русские», «Праздничные», «Детские», «Классика», «Мировые».",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "duration_s": {
+      "type": "number",
+      "format": "double"
+    },
+    "id": {
+      "type": "string"
+    },
+    "preview": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tag": {
+      "type": "string",
+      "default": ""
+    },
+    "title": {
+      "type": "string"
+    },
+    "version": {
+      "description": "Первые 12 hex-символов SHA-256 файла reference.json.",
+      "type": "string",
+      "default": ""
+    }
+  },
+  "required": [
+    "id",
+    "title",
+    "artist",
+    "duration_s"
+  ]
+}

@@ -1,0 +1,191 @@
+/* Дизайн-токены Перепева: ночная комната меломана. Тёмная стена, бумага, вишнёвый
+   акцент. Вишнёвый — всегда «твой голос», пыльно-синий — всегда соперник, карандаш — эталон. */
+@font-face {
+  font-family: "Golos Text";
+  src: url("/fonts/GolosText.ttf") format("truetype");
+  font-weight: 400 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Caveat";
+  src: url("/fonts/Caveat.woff2") format("woff2");
+  font-weight: 400 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  src: url("/fonts/IBMPlexMono-Medium.woff2") format("woff2");
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Oswald";
+  src: url("/fonts/Oswald.woff2") format("woff2");
+  font-weight: 200 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "PT Serif";
+  src: url("/fonts/PTSerif-Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Rubik Mono One";
+  src: url("/fonts/RubikMonoOne.woff2") format("woff2");
+  font-weight: 400;
+  font-display: swap;
+}
+
+:root {
+  color-scheme: dark;
+
+  /* Комната */
+  --room: #171719;
+  --room-2: #252426;
+  --room-3: #302e31;
+  --room-line: #3d3a3c;
+  --on-room: #efe6d2;
+  --on-room-2: #b8b0a0;
+  --on-room-3: #8d8678;
+
+  /* Бумага и чернила */
+  --paper: #efe6d2;
+  --paper-2: #f5f0e6;
+  --paper-3: #e2d6bb;
+  --kraft: #c9ae84;
+  --ink: #1f1c1a;
+  --ink-2: #4f4942;
+  --ink-3: #6f675d;
+  --rule: #b9c6cf;
+  --margin: #d77b74;
+  --marker: #f2d74e;
+
+  /* Акцент и второстепенные цвета */
+  --accent: #a81d1d;
+  --accent-2: #b52b35;
+  --accent-hover: #8f1717;
+  --accent-soft: #f0d2c9;
+  --accent-bright: #e2525a; /* вишнёвый для линий на тёмном */
+  --rival: #4a6687;
+  --rival-soft: #d6dde5;
+  --rival-bright: #9db4d0;
+  --mustard: #c99a2e;
+  --forest: #3e5a46;
+  --silver: #b9b8b2;
+  --silver-2: #8e8d88;
+  --danger: #a81d1d;
+  --focus: #e8b93a;
+
+  /* Сцена пения: та же комната, линии светлее */
+  --stage: var(--room);
+  --stage-2: var(--room-2);
+  --stage-line: var(--room-line);
+  --stage-ink: var(--on-room);
+  --stage-ink-2: var(--on-room-2);
+  --stage-accent: var(--accent-bright);
+  --stage-rival: var(--rival-bright);
+  --stage-reference: #6b665e;
+
+  /* Графики на бумаге */
+  --reference: #a59e91;
+  --line: #d2c7af;
+  --line-strong: #b4a888;
+  --surface: var(--paper-2);
+  --sunken: #e6dcc6;
+
+  /* Типографика: шкала 1.25 от 15 px */
+  --font: "Golos Text", system-ui, sans-serif;
+  --font-hand: "Caveat", "Segoe Print", cursive;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-poster: "Oswald", "Golos Text", sans-serif;
+  --font-serif: "PT Serif", Georgia, serif;
+  --font-block: "Rubik Mono One", "Golos Text", sans-serif;
+  --t-xs: 0.8125rem; /* 13 */
+  --t-s: 0.875rem; /* 14 */
+  --t-m: 0.9375rem; /* 15 */
+  --t-l: 1.125rem; /* 18 */
+  --t-xl: 1.375rem; /* 22 */
+  --t-2xl: 1.75rem; /* 28 */
+  --t-3xl: 2.25rem; /* 36 */
+  --t-4xl: 3rem; /* 48 */
+  --t-score: 5.5rem; /* 88 */
+  --lh-tight: 1.1;
+  --lh-text: 1.5;
+
+  /* Отступы: шаг 4 px */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+
+  /* Геометрия */
+  --container: 1440px;
+  --gutter: clamp(16px, 3vw, 44px);
+  /* Высота шапки, подвала и нижнего отступа: экраны на 1366×768 помещаются без прокрутки. */
+  --chrome: 112px;
+  /* Высота шапки с вкладками: экраны-сцены занимают остаток окна. */
+  --nav-h: 62px;
+  --control-h: 40px;
+  --control-h-l: 46px;
+  /* Минимальная цель нажатия на сенсорных и небольших экранах. */
+  --tap: 44px;
+  /* Вырез, скругления и полоска «домой» на телефонах (нужен viewport-fit=cover). */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --r-control: 4px;
+  --r-surface: 3px;
+  --r-pill: 999px;
+  --border: 1px solid var(--line);
+
+  /* Тени по слоям: стена — предметы — наклейки */
+  --shadow-sheet: 0 1px 0 rgb(0 0 0 / 0.35), 0 14px 28px -10px rgb(0 0 0 / 0.75);
+  --shadow-object: 0 2px 2px rgb(0 0 0 / 0.45), 0 22px 36px -14px rgb(0 0 0 / 0.85);
+  --shadow-sticker: 0 1px 1.5px rgb(0 0 0 / 0.45);
+  --shadow-pop: 0 26px 60px -12px rgb(0 0 0 / 0.85);
+
+  /* Фактуры (SVG в data:, CSP разрешает img-src data:) */
+  --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .48 0 0 0 0 .45 0 0 0 .2 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --tex-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .6' numOctaves='3' seed='4'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .38 0 0 0 0 .27 0 0 0 .16 0'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23p)'/%3E%3C/svg%3E");
+  --tex-metal: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.012 .9' numOctaves='2' seed='9'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .12 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23m)'/%3E%3C/svg%3E");
+
+  /* Движение */
+  --d-fast: 120ms;
+  --d-base: 220ms;
+  --d-slow: 420ms;
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-heavy: cubic-bezier(0.34, 1.12, 0.4, 1);
+}
+
+/* Раскладки. @custom-media браузеры пока не понимают, поэтому страницы пишут эти запросы
+   буквально, а имена ниже — общий словарь для стилей, тестов и docs/brand.md.
+   compact  (max-width: 599px)                                          телефон в портрете
+   short    (max-height: 520px) and (orientation: landscape)            телефон в ландшафте: поток
+                                                                        или две колонки, декор сцены пения скрыт
+   medium   (min-width: 600px) and (max-width: 1099px) and (min-height: 521px)   планшет, узкое окно
+   wide     (min-width: 1100px) and (min-height: 521px)                 ноутбук и монитор: абсолютные сцены
+   xwide    (min-width: 2200px), (min-aspect-ratio: 21/9)               контейнер до 1680 px, шрифт через clamp()
+   не wide  not all and (min-width: 1100px) and (min-height: 521px)     сцены идут потоком, цели нажатия 44 px */
+@media (min-width: 2200px), (min-aspect-ratio: 21/9) {
+  :root {
+    --container: 1680px;
+  }
+  html {
+    /* 16 px на обычном мониторе, до 21 px на 3440×1440: текст в rem не выглядит мелким. */
+    font-size: clamp(100%, 0.62rem + 0.36vw, 131.25%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --d-fast: 0ms;
+    --d-base: 0ms;
+    --d-slow: 0ms;
+  }
+}

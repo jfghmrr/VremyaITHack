@@ -1,0 +1,4 @@
+# Packaging reviewed local sources; ML separation/transcription is optional preparation.
+-r requirements.txt
+soundfile>=0.13,<1
+scipy>=1.15,<2

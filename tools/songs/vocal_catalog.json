@@ -1,0 +1,1120 @@
+[
+  {
+    "id": "jw-little-tomcat",
+    "title": "Little Tomcat",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/little-tomcat",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/little-tomcat",
+    "sourceSha256": "2cff0a4a690b870f4b221787248dafe029a30fcc75a5561d327f3f26ed83e541",
+    "lines": [
+      {
+        "start_s": 16.4,
+        "end_s": 19.82,
+        "text": "Little tomcat, stay close to me"
+      },
+      {
+        "start_s": 19.9,
+        "end_s": 25.36,
+        "text": "'Cause there are clouds on the horizon and a chill on the breeze"
+      },
+      {
+        "start_s": 27.7,
+        "end_s": 32.0,
+        "text": "We're alone now, don't you be scared"
+      },
+      {
+        "start_s": 32.1,
+        "end_s": 37.3,
+        "text": "I've got a callused hand, a farmer's tan, and I'm happy to share"
+      }
+    ],
+    "clip": {
+      "start_s": 16.0,
+      "end_s": 37.55,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-as-i-am",
+    "title": "As I Am",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/as-i-am",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/as-i-am",
+    "sourceSha256": "42bf8cdb79e07ed553c9709608ebd82d28303972de04591effbd5aeed072a38e",
+    "lines": [
+      {
+        "start_s": 0,
+        "end_s": 3.18,
+        "text": "When you walk, I stumble"
+      },
+      {
+        "start_s": 3.98,
+        "end_s": 7.12,
+        "text": "When you talk, I mumble"
+      },
+      {
+        "start_s": 7.36,
+        "end_s": 12.26,
+        "text": "And when you smile I have to turn away"
+      },
+      {
+        "start_s": 14.32,
+        "end_s": 17.98,
+        "text": "When you shine, I'm cloudy"
+      },
+      {
+        "start_s": 18.72,
+        "end_s": 21.84,
+        "text": "When you climb, I'm doubting"
+      },
+      {
+        "start_s": 22.72,
+        "end_s": 27.0,
+        "text": "That I won't fall before I reach the top"
+      }
+    ],
+    "clip": {
+      "start_s": 0,
+      "end_s": 27.25,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-crazy-glue",
+    "title": "Crazy Glue",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/crazy-glue",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/crazy-glue",
+    "sourceSha256": "9743bf76464493220532c3f53ce8dd61f2c0666e491db9b148affd40375bd69e",
+    "lines": [
+      {
+        "start_s": 14.36,
+        "end_s": 17.9,
+        "text": "There's no gravity that sucked me in your orbit"
+      },
+      {
+        "start_s": 17.9,
+        "end_s": 21.3,
+        "text": "There's no magnet that was in your heart"
+      },
+      {
+        "start_s": 22.08,
+        "end_s": 24.3,
+        "text": "The one restriction was the friction"
+      },
+      {
+        "start_s": 24.3,
+        "end_s": 27.8,
+        "text": "That was keeping us a little too far apart"
+      }
+    ],
+    "clip": {
+      "start_s": 13.96,
+      "end_s": 28.05,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-this-is-everything",
+    "title": "This Is Everything",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/this-is-everything",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/this-is-everything",
+    "sourceSha256": "904c3e7dd5e7d16ac1b402c4a02c9b78428b413056e568abe4de482bd0a62520",
+    "lines": [
+      {
+        "start_s": 0.2,
+        "end_s": 2.1,
+        "text": "In the wake of the storm"
+      },
+      {
+        "start_s": 3.3,
+        "end_s": 6.2,
+        "text": "I was shaken, I was reborn"
+      },
+      {
+        "start_s": 6.9,
+        "end_s": 10.8,
+        "text": "I got another shot to make it to the top today"
+      },
+      {
+        "start_s": 13.06,
+        "end_s": 15.44,
+        "text": "I'm pulling out the sutures"
+      },
+      {
+        "start_s": 16.18,
+        "end_s": 18.0,
+        "text": "I'm ready for the future"
+      },
+      {
+        "start_s": 19.2,
+        "end_s": 23.6,
+        "text": "I'm ready for the slings and arrows and the fortunes lost"
+      }
+    ],
+    "clip": {
+      "start_s": 0,
+      "end_s": 23.85,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-i-will-not-let-you-let-me-down",
+    "title": "I Will Not Let You Let Me Down",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/i-will-not-let-you-let-me-down",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/i-will-not-let-you-let-me-down",
+    "sourceSha256": "1c890cde5b1e879263d7da117db339760b63f96ade24566e328944b7a9aea436",
+    "lines": [
+      {
+        "start_s": 5.1,
+        "end_s": 9.9,
+        "text": "Everything is new again, walking with a permagrin, head so high"
+      },
+      {
+        "start_s": 10.62,
+        "end_s": 13.8,
+        "text": "I'm back with you and all is right"
+      },
+      {
+        "start_s": 15.5,
+        "end_s": 20.3,
+        "text": "Shaking on the apple tree, ticking off the honeybees, watch them fly"
+      },
+      {
+        "start_s": 20.96,
+        "end_s": 24.0,
+        "text": "It's just like we never said goodbye"
+      }
+    ],
+    "clip": {
+      "start_s": 4.7,
+      "end_s": 24.25,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-oh-mallory",
+    "title": "Oh Mallory",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/oh-mallory",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/oh-mallory",
+    "sourceSha256": "4110ce20fa72a37c62b1bbfc4925bf9960f9398153a55e0a09bc6a10d3a272bd",
+    "lines": [
+      {
+        "start_s": 13.68,
+        "end_s": 17.0,
+        "text": "Say no more to me, pack up your storm"
+      },
+      {
+        "start_s": 17.0,
+        "end_s": 20.4,
+        "text": "I've been lost in the woods since the day I was born"
+      },
+      {
+        "start_s": 20.4,
+        "end_s": 23.1,
+        "text": "I'd have pushed you aside but your body was warm"
+      },
+      {
+        "start_s": 23.1,
+        "end_s": 26.0,
+        "text": "And your hands were open"
+      }
+    ],
+    "clip": {
+      "start_s": 13.28,
+      "end_s": 26.25,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-half-life",
+    "title": "Half-Life",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/half-life",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/half-life",
+    "sourceSha256": "f8b35f08033b44ae09e5ad2f5fe9ffe1ee3acbd79f6d3ad4ef5256f96277db8e",
+    "lines": [
+      {
+        "start_s": 17.5,
+        "end_s": 21.3,
+        "text": "In one moment, it all can break"
+      },
+      {
+        "start_s": 21.3,
+        "end_s": 26.4,
+        "text": "You pinch yourself, but you're already awake"
+      },
+      {
+        "start_s": 33.36,
+        "end_s": 37.7,
+        "text": "With no warning, the sky can crack"
+      },
+      {
+        "start_s": 37.7,
+        "end_s": 43.5,
+        "text": "And take something you never can get back"
+      }
+    ],
+    "clip": {
+      "start_s": 17.1,
+      "end_s": 43.75,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-same-boat",
+    "title": "Same Boat",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/same-boat",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/same-boat",
+    "sourceSha256": "69f6fe9ad824e97bcaee5e06901a78bd992db7410a86111232bf8c7e9f7662d2",
+    "lines": [
+      {
+        "start_s": 31.4,
+        "end_s": 33.9,
+        "text": "Facing each other"
+      },
+      {
+        "start_s": 35.54,
+        "end_s": 40.5,
+        "text": "Grasping at different oars"
+      },
+      {
+        "start_s": 42.12,
+        "end_s": 45.4,
+        "text": "We're cornered in a stalemate"
+      },
+      {
+        "start_s": 46.96,
+        "end_s": 50.44,
+        "text": "But the sun is down, it's getting late"
+      },
+      {
+        "start_s": 50.44,
+        "end_s": 54.9,
+        "text": "I've either gotta turn around"
+      },
+      {
+        "start_s": 54.9,
+        "end_s": 58.3,
+        "text": "Or learn how to swim"
+      }
+    ],
+    "clip": {
+      "start_s": 31.0,
+      "end_s": 58.55,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-flickering-flame",
+    "title": "Flickering Flame",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/flickering-flame",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/flickering-flame",
+    "sourceSha256": "5c1082365ff5079f2491184e110100fdcda64faf4e647f5d0113ce4b59449be6",
+    "lines": [
+      {
+        "start_s": 12.24,
+        "end_s": 17.7,
+        "text": "In the twilight of summer, you shook like a leaf"
+      },
+      {
+        "start_s": 17.7,
+        "end_s": 23.16,
+        "text": "And blew to the ground in a pile at my feet"
+      },
+      {
+        "start_s": 23.16,
+        "end_s": 29.9,
+        "text": "I picked you up, we fell into place"
+      }
+    ],
+    "clip": {
+      "start_s": 11.84,
+      "end_s": 30.15,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-the-rival-within",
+    "title": "The Rival Within",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/the-rival-within",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/the-rival-within",
+    "sourceSha256": "e30ce2ca959e1fe5aa76197ce9dfb7a43e37fa1f9d227503ad1828f2b01bacd5",
+    "lines": [
+      {
+        "start_s": 9.7,
+        "end_s": 12.84,
+        "text": "I spilled out my heart"
+      },
+      {
+        "start_s": 13.66,
+        "end_s": 16.66,
+        "text": "For you to consume"
+      },
+      {
+        "start_s": 17.5,
+        "end_s": 22.5,
+        "text": "And there in the dark"
+      },
+      {
+        "start_s": 23.98,
+        "end_s": 26.7,
+        "text": "The denial, it loomed"
+      },
+      {
+        "start_s": 27.1,
+        "end_s": 31.2,
+        "text": "You stared at the floor, and tried to ignore"
+      }
+    ],
+    "clip": {
+      "start_s": 9.3,
+      "end_s": 31.45,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-shade",
+    "title": "Shade",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/shade",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/shade",
+    "sourceSha256": "5166a88412d5f92e84af1c319c0f06924226e52f8f91b9796412c616c033cbe1",
+    "lines": [
+      {
+        "start_s": 16.58,
+        "end_s": 20.04,
+        "text": "A summer long ago"
+      },
+      {
+        "start_s": 21.04,
+        "end_s": 24.26,
+        "text": "A little seed was sown"
+      },
+      {
+        "start_s": 25.9,
+        "end_s": 29.54,
+        "text": "By a farmer with no shade"
+      },
+      {
+        "start_s": 31.46,
+        "end_s": 35.22,
+        "text": "The hourglass of time"
+      },
+      {
+        "start_s": 35.7,
+        "end_s": 38.9,
+        "text": "He watched it slowly climb"
+      },
+      {
+        "start_s": 40.58,
+        "end_s": 44.6,
+        "text": "While he began to fade"
+      }
+    ],
+    "clip": {
+      "start_s": 16.18,
+      "end_s": 44.85,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-vanishing-note",
+    "title": "Vanishing Note",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/vanishing-note",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/vanishing-note",
+    "sourceSha256": "fb48a5b68637cc9a24d1566ba22551879b3e89b87cb5c8bbc3dcb0f11c005d25",
+    "lines": [
+      {
+        "start_s": 3.02,
+        "end_s": 7.9,
+        "text": "I was a vanishing note"
+      },
+      {
+        "start_s": 8.1,
+        "end_s": 12.8,
+        "text": "In the song that you wrote"
+      },
+      {
+        "start_s": 15.14,
+        "end_s": 19.7,
+        "text": "Your harmony"
+      },
+      {
+        "start_s": 19.7,
+        "end_s": 24.3,
+        "text": "Grew far from me and faded"
+      }
+    ],
+    "clip": {
+      "start_s": 2.62,
+      "end_s": 24.55,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-the-maze",
+    "title": "The Maze",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://joshwoodward.bandcamp.com/track/the-maze",
+    "license": "CC BY 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://joshwoodward.bandcamp.com/track/the-maze",
+    "sourceSha256": "f0a12152a6031019ccce2b02ac09cd1ad47902e7dfc521b08f4749daaf1b0ca8",
+    "lines": [
+      {
+        "start_s": 0.3,
+        "end_s": 5.7,
+        "text": "Inside every mind, if you look, you will find"
+      },
+      {
+        "start_s": 5.7,
+        "end_s": 12.2,
+        "text": "There's a child who never grew old"
+      },
+      {
+        "start_s": 12.8,
+        "end_s": 18.5,
+        "text": "Who sings to the trees like nobody can see"
+      },
+      {
+        "start_s": 18.5,
+        "end_s": 25.3,
+        "text": "With the fire that never went cold"
+      }
+    ],
+    "clip": {
+      "start_s": 0,
+      "end_s": 25.55,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "jw-follow-the-road",
+    "title": "Follow the Road",
+    "artist": "Josh Woodward",
+    "language": "en",
+    "source": "https://commons.wikimedia.org/wiki/File:Josh_Woodward_-_19_-_Follow_the_Road.ogg",
+    "license": "CC BY 3.0 US",
+    "licenseUrl": "https://creativecommons.org/licenses/by/3.0/us/",
+    "method": "demucs",
+    "credits": "Музыка, слова и исполнение — Josh Woodward",
+    "lyricsSource": "https://www.youtube.com/watch?v=6nMH-UVQQDs",
+    "sourceSha256": "1f71866d38b6b233f0721cc9a3a9c58620cd071b7166d34896f54d1b84681e82",
+    "lines": [
+      {
+        "start_s": 0.2,
+        "end_s": 4.4,
+        "text": "Can you miss what you never have known?"
+      },
+      {
+        "start_s": 6.2,
+        "end_s": 12.8,
+        "text": "And can you ache for a place that was never your home?"
+      },
+      {
+        "start_s": 13.6,
+        "end_s": 20.4,
+        "text": "No misgivings or shame, like a moth to the flame"
+      },
+      {
+        "start_s": 22.88,
+        "end_s": 26.6,
+        "text": "To burn up or fizzle alone?"
+      }
+    ],
+    "clip": {
+      "start_s": 0,
+      "end_s": 26.85,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-sunset",
+    "title": "Над землёю алеет закат",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/earths-attraction/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Виктор Аргонов; вокал — Наталья Митрофанова",
+    "lyricsSource": "https://complexnumbers.ru/earths-attraction/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Feart-src/repository/files/src-basic%2Feart_03_voc_fin.wav/raw?ref=master",
+    "sourceSha256": "2809764dad28c410a93656670c648378e68de5ba94aee73fdf691c533d9c8b99",
+    "lines": [
+      {
+        "start_s": 46.38,
+        "end_s": 49.3,
+        "text": "Над Землёю алеет закат,"
+      },
+      {
+        "start_s": 49.3,
+        "end_s": 53.0,
+        "text": "И разлука всё ближе и ближе,"
+      },
+      {
+        "start_s": 53.0,
+        "end_s": 56.5,
+        "text": "Только разум не может принять,"
+      },
+      {
+        "start_s": 57.08,
+        "end_s": 60.1,
+        "text": "Что тебя я в последний раз вижу."
+      }
+    ],
+    "clip": {
+      "start_s": 45.98,
+      "end_s": 60.35,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-earth",
+    "title": "Земное притяжение",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/earths-attraction/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Илья Пятов; вокал — Наталья Митрофанова",
+    "lyricsSource": "https://complexnumbers.ru/earths-attraction/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Feart-src/repository/files/src-basic%2Feart_13_voc_fin_1.wav/raw?ref=master",
+    "sourceSha256": "a85de85d6da661d97cf4a30e8bdb0c5f04f003eb91b708e8d7129e3e7df79581",
+    "lines": [
+      {
+        "start_s": 64.32,
+        "end_s": 67.36,
+        "text": "Пусть в твоей памяти нетленный"
+      },
+      {
+        "start_s": 67.54,
+        "end_s": 69.94,
+        "text": "Маленький шарик ждёт тебя."
+      },
+      {
+        "start_s": 70.76,
+        "end_s": 73.68,
+        "text": "Верь мне, что ты во всей вселенной"
+      },
+      {
+        "start_s": 73.68,
+        "end_s": 76.54,
+        "text": "Сможешь лишь там найти себя."
+      }
+    ],
+    "clip": {
+      "start_s": 63.92,
+      "end_s": 76.79,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-last-ring",
+    "title": "Последнее кольцо",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/last-ring/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Андрей Климковский, Виктор Аргонов; текст — Виктор Аргонов; вокал — Ariel",
+    "lyricsSource": "https://complexnumbers.ru/last-ring/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Flast-src/repository/files/src-basic%2Flast_01_voc_fin_1.wav/raw?ref=master",
+    "sourceSha256": "5b064289bd10b422c74a30647f690242354a32a8561c8ddef18cc56f3bad38d9",
+    "lines": [
+      {
+        "start_s": 30.62,
+        "end_s": 34.3,
+        "text": "Там, за порогом ночи,"
+      },
+      {
+        "start_s": 34.3,
+        "end_s": 38.0,
+        "text": "Ты пришёл к своей цели,"
+      },
+      {
+        "start_s": 38.58,
+        "end_s": 41.0,
+        "text": "Вдалеке от Земли,"
+      },
+      {
+        "start_s": 41.0,
+        "end_s": 43.7,
+        "text": "Где остались леса и метели."
+      }
+    ],
+    "clip": {
+      "start_s": 30.22,
+      "end_s": 43.95,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-inevitability",
+    "title": "Неизбежность",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/last-ring/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Виктор Аргонов; вокал — Наталья Митрофанова",
+    "lyricsSource": "https://complexnumbers.ru/last-ring/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Flast-src/repository/files/src-basic%2Flast_09_voc_fin_1.wav/raw?ref=master",
+    "sourceSha256": "c2a04079fa47209efccecc6dd1d14069ceae48306ac502fdf302a252cf2d8420",
+    "lines": [
+      {
+        "start_s": 30.5,
+        "end_s": 32.0,
+        "text": "Ветра порыв,"
+      },
+      {
+        "start_s": 32.0,
+        "end_s": 37.5,
+        "text": "И лист ещё жёлтый спешил отстегнуться"
+      },
+      {
+        "start_s": 38.0,
+        "end_s": 41.3,
+        "text": "И вниз, колыхаясь, поплыл."
+      },
+      {
+        "start_s": 43.56,
+        "end_s": 45.3,
+        "text": "Вот и земля,"
+      },
+      {
+        "start_s": 45.3,
+        "end_s": 51.5,
+        "text": "И скорость его тихим шорохом стала,"
+      },
+      {
+        "start_s": 51.5,
+        "end_s": 55.0,
+        "text": "И он между травинок застыл."
+      }
+    ],
+    "clip": {
+      "start_s": 30.1,
+      "end_s": 55.25,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-wonder",
+    "title": "В дни чудес",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/between-the-two-ages/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Виктор Аргонов; вокал — Oleviia",
+    "lyricsSource": "https://complexnumbers.ru/between-the-two-ages/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Fbetween-the-two-ages/repository/files/basic%2Fdays_voc_raw.wav/raw?ref=master",
+    "sourceSha256": "e7de09a9a5d119e34bec442a7606bebcc5bb4ad226986e86ec6be83ce127b506",
+    "lines": [
+      {
+        "start_s": 19.68,
+        "end_s": 24.5,
+        "text": "Мы привыкли винить потребительский век,"
+      },
+      {
+        "start_s": 24.5,
+        "end_s": 29.34,
+        "text": "Что измельчал прогресс, что стих открытий бег,"
+      },
+      {
+        "start_s": 29.34,
+        "end_s": 34.0,
+        "text": "Что в мотивах людских прикладной интерес"
+      },
+      {
+        "start_s": 34.0,
+        "end_s": 39.6,
+        "text": "Сегодня стал важней абстрактных тайн небес."
+      }
+    ],
+    "clip": {
+      "start_s": 19.28,
+      "end_s": 39.85,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-200-minutes",
+    "title": "200 минут",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/between-the-two-ages/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Виктор Аргонов; вокал — Елена Яковец, Len",
+    "lyricsSource": "https://complexnumbers.ru/between-the-two-ages/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Fbetween-the-two-ages/repository/files/basic%2F200_voc_raw.wav/raw?ref=master",
+    "sourceSha256": "663a372dc0f218f6d8e83d5e3c453c6435f7f8a50ef64f077e6dd634ee0f32a1",
+    "lines": [
+      {
+        "start_s": 44.4,
+        "end_s": 47.0,
+        "text": "Двести минут пути —"
+      },
+      {
+        "start_s": 47.0,
+        "end_s": 50.7,
+        "text": "Тысяча сто пролетят километров,"
+      },
+      {
+        "start_s": 50.7,
+        "end_s": 53.0,
+        "text": "И растворится день"
+      },
+      {
+        "start_s": 53.26,
+        "end_s": 57.5,
+        "text": "В огненных вихрях закатного ветра."
+      }
+    ],
+    "clip": {
+      "start_s": 44.0,
+      "end_s": 57.75,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "cn-1000-years",
+    "title": "1000 лет назад",
+    "artist": "Complex Numbers",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/between-the-two-ages/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Виктор Аргонов; вокал — Len",
+    "lyricsSource": "https://complexnumbers.ru/between-the-two-ages/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2Fbetween-the-two-ages/repository/files/basic%2F1000_voc_raw.wav/raw?ref=master",
+    "sourceSha256": "55e0a17b3711a8f58bdef0ed561bdfc101c4bdde9cef957d9d8f01278bc8f4bf",
+    "lines": [
+      {
+        "start_s": 56.1,
+        "end_s": 58.5,
+        "text": "А тысячу лет назад"
+      },
+      {
+        "start_s": 59.68,
+        "end_s": 62.6,
+        "text": "Мне звёзды казались так близко:"
+      },
+      {
+        "start_s": 62.6,
+        "end_s": 65.3,
+        "text": "Лишь детства пройдут года,"
+      },
+      {
+        "start_s": 66.56,
+        "end_s": 69.0,
+        "text": "И мы полетим туда."
+      }
+    ],
+    "clip": {
+      "start_s": 55.7,
+      "end_s": 69.25,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "va-starry-vortex",
+    "title": "В звёздном вихре времён",
+    "artist": "Виктор Аргонов Project",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/2032/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Музыка и текст — Виктор Аргонов; вокал — Елена Яковец",
+    "lyricsSource": "https://complexnumbers.ru/2032/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2F2032-src/repository/files/src-basic%2Fargonov_2032_04_voc_fin.wav/raw?ref=master",
+    "sourceSha256": "d52e93c5b7a9939697e77d8843a6b6c6423eb75af6279398aef983ac73265311",
+    "lines": [
+      {
+        "start_s": 27.67,
+        "end_s": 30.02,
+        "text": "В звёздном вихре времён"
+      },
+      {
+        "start_s": 30.56,
+        "end_s": 33.6,
+        "text": "Мечты меняют цвет:"
+      },
+      {
+        "start_s": 34.29,
+        "end_s": 36.69,
+        "text": "Стали былью одни,"
+      },
+      {
+        "start_s": 37.22,
+        "end_s": 40.02,
+        "text": "Других растаял след,"
+      },
+      {
+        "start_s": 41.27,
+        "end_s": 44.56,
+        "text": "А иные влекут на странный свет"
+      },
+      {
+        "start_s": 44.56,
+        "end_s": 46.73,
+        "text": "Уж тысячи лет,"
+      },
+      {
+        "start_s": 47.87,
+        "end_s": 51.07,
+        "text": "Оставаясь лишь призраком, лишь сном,"
+      },
+      {
+        "start_s": 51.07,
+        "end_s": 53.4,
+        "text": "Хранящим завет."
+      }
+    ],
+    "clip": {
+      "start_s": 27.27,
+      "end_s": 53.65,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "va-angel",
+    "title": "Ангел жизни новой",
+    "artist": "Виктор Аргонов Project",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/2032/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Музыка и текст — Виктор Аргонов; вокал — Виталий Трофименко",
+    "lyricsSource": "https://complexnumbers.ru/2032/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2F2032-src/repository/files/src-basic%2Fargonov_2032_10_voc_fin.wav/raw?ref=master",
+    "sourceSha256": "ce0bb331026d9894f588e46e5ec23696701d63e50ea464766540263de47ee2db",
+    "lines": [
+      {
+        "start_s": 44.5,
+        "end_s": 45.83,
+        "text": "Казалось мне всегда,"
+      },
+      {
+        "start_s": 47.15,
+        "end_s": 48.68,
+        "text": "Что наша цель ясна,"
+      },
+      {
+        "start_s": 50.28,
+        "end_s": 53.48,
+        "text": "Что знаем мы, что ищем за порогом."
+      },
+      {
+        "start_s": 55.55,
+        "end_s": 57.35,
+        "text": "Оправдана и ложь,"
+      },
+      {
+        "start_s": 58.2,
+        "end_s": 60.05,
+        "text": "Когда она нужна"
+      },
+      {
+        "start_s": 60.85,
+        "end_s": 64.78,
+        "text": "Для блага истины искомого итога."
+      }
+    ],
+    "clip": {
+      "start_s": 44.1,
+      "end_s": 65.03,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  },
+  {
+    "id": "va-illusive-light",
+    "title": "К призрачному свету",
+    "artist": "Виктор Аргонов Project",
+    "language": "ru",
+    "source": "https://complexnumbers.ru/2032/",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "method": "official-stem",
+    "credits": "Музыка и текст — Виктор Аргонов; вокал — Ariel",
+    "lyricsSource": "https://complexnumbers.ru/2032/",
+    "stemUrl": "https://gitlab.com/api/v4/projects/complexnumbers%2F2032-src/repository/files/src-basic%2Fargonov_2032_12_voc_fin.wav/raw?ref=master",
+    "sourceSha256": "b51a3ee6cd1db19eb8d38813c14436839382c845c1aa693c822f51ebdcd84f6a",
+    "lines": [
+      {
+        "start_s": 1.76,
+        "end_s": 3.29,
+        "text": "Ночь"
+      },
+      {
+        "start_s": 4.36,
+        "end_s": 6.82,
+        "text": "Гаснущего лета"
+      },
+      {
+        "start_s": 7.87,
+        "end_s": 11.04,
+        "text": "Россыпями звёзд горит"
+      },
+      {
+        "start_s": 11.33,
+        "end_s": 13.93,
+        "text": "В сумерках рассвета."
+      },
+      {
+        "start_s": 15.87,
+        "end_s": 17.09,
+        "text": "Я"
+      },
+      {
+        "start_s": 18.44,
+        "end_s": 21.8,
+        "text": "Вновь лечу сквозь память снов,"
+      },
+      {
+        "start_s": 22.09,
+        "end_s": 24.07,
+        "text": "В лабиринте грёз,"
+      },
+      {
+        "start_s": 25.31,
+        "end_s": 29.53,
+        "text": "К призрачному свету!"
+      }
+    ],
+    "clip": {
+      "start_s": 1.36,
+      "end_s": 29.78,
+      "lead_s": 1.0
+    },
+    "reviewedAt": "2026-10-16",
+    "timingNote": "Текст отредактирован; пословное время приближённое, выравнивание по локальному Whisper."
+  }
+]

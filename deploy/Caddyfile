@@ -1,0 +1,80 @@
+# Caddy раздаёт статический сайт и проксирует /api (HTTP и WebSocket) на экземпляры API.
+# SITE_ADDRESS: «:80» для локального запуска, доменное имя — для общего сервера с HTTPS
+# (сертификат Caddy получит автоматически, если домен указывает на сервер).
+{
+	admin off
+	# Адрес клиента для лимитов API. Запросу с доверенного адреса Caddy верит в
+	# X-Forwarded-For: так работает nginx хоста (публикация 127.0.0.1:порт приходит
+	# в контейнер с адреса шлюза Docker, а он в private_ranges). Значения разбираются
+	# справа налево, поэтому подставленный слева адрес ничего не меняет. Для запроса с
+	# недоверенного адреса клиентом считается сам этот адрес, заголовок отбрасывается.
+	# CADDY_TRUSTED_PROXIES: пустое значение — не доверять никому (compose.server.yaml,
+	# где Caddy сам принимает клиентов на 80/443).
+	servers {
+		trusted_proxies static {$CADDY_TRUSTED_PROXIES:private_ranges}
+		trusted_proxies_strict
+		client_ip_headers X-Forwarded-For
+	}
+}
+
+{$SITE_ADDRESS::80} {
+	encode zstd gzip
+
+	# Отдельные блоки: try_files ниже не должен переписывать запросы к API.
+	handle /api/* {
+		reverse_proxy {
+			# Все экземпляры API по DNS-имени сервиса (docker compose up --scale api=2).
+			dynamic a api 3001 {
+				refresh 5s
+			}
+			lb_policy round_robin
+			health_uri /api/health
+			health_interval 5s
+			# Ровно один адрес — клиент (см. servers выше). Без этой строки Caddy за
+			# доверенным прокси дописал бы адрес nginx в конец, а API (TRUST_PROXY)
+			# берёт последний элемент — все клиенты получили бы один общий лимит.
+			header_up X-Forwarded-For {client_ip}
+		}
+	}
+
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy same-origin
+		Permissions-Policy "microphone=(self), camera=(), geolocation=()"
+		Cross-Origin-Opener-Policy same-origin
+		# Скрипты защищает CSP с хешами, которую SvelteKit вставляет в страницы; здесь — то,
+		# что нельзя задать через meta.
+		Content-Security-Policy "frame-ancestors 'none'"
+		# Браузеры учитывают HSTS только по HTTPS, поэтому локальный http://localhost не затронут.
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+	# Сборка: файлы с хешем в имени не меняются; version.json SvelteKit проверяет после
+	# обновления сайта, поэтому он всегда сверяется с сервером.
+	header /_app/immutable/* Cache-Control "public, max-age=31536000, immutable"
+	header /_app/version.json Cache-Control "no-cache"
+	# Файлы песен без хеша в имени: браузер сверяет их с сервером (ETag даёт 304).
+	header /songs/* Cache-Control "no-cache"
+	header /fonts/* Cache-Control "public, max-age=604800"
+	# Графика версионирована параметром ?v=, неделя кеша экономит повторные проверки.
+	# Только для найденных файлов: отсутствующая картинка (404) не запоминается на неделю.
+	header /art/* Cache-Control "public, max-age=604800" {
+		match status 2xx 304
+	}
+
+	# Файлы песен, сборки, графики и шрифтов: отсутствующий файл — честный 404, а не страница приложения.
+	@assets path /songs/* /_app/* /art/* /fonts/* /favicon.ico /favicon-32.png /icon-192.png /icon-512.png /apple-touch-icon.png /site.webmanifest /THIRD_PARTY_NOTICES.txt
+	handle @assets {
+		root * /srv
+		file_server
+	}
+
+	# Страницы (HTML) всегда сверяются с сервером: после обновления сайта браузер не возьмёт
+	# из кеша старую страницу со ссылками на уже удалённые файлы сборки.
+	handle {
+		header Cache-Control "no-cache"
+		root * /srv
+		try_files {path} {path}.html /200.html
+		file_server
+	}
+}

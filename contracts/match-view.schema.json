@@ -1,0 +1,290 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MatchView",
+  "type": "object",
+  "properties": {
+    "algorithm_version": {
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0
+    },
+    "deadline_ms": {
+      "description": "Срок текущего шага (подтверждение, готовность, сбор кривых), мс Unix.",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "int64"
+    },
+    "end_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "kind": {
+      "type": "string"
+    },
+    "match_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "players": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/PlayerView"
+      }
+    },
+    "result": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/MatchResult"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "room_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "song": {
+      "$ref": "#/$defs/SongRef"
+    },
+    "start_at_ms": {
+      "description": "Время старта по часам сервера, мс Unix.",
+      "type": [
+        "integer",
+        "null"
+      ],
+      "format": "int64"
+    },
+    "state": {
+      "$ref": "#/$defs/MatchState"
+    }
+  },
+  "required": [
+    "match_id",
+    "kind",
+    "state",
+    "song",
+    "algorithm_version",
+    "players"
+  ],
+  "$defs": {
+    "Axes": {
+      "type": "object",
+      "properties": {
+        "coverage": {
+          "type": "number",
+          "format": "double"
+        },
+        "intervals": {
+          "type": "number",
+          "format": "double"
+        },
+        "rhythm": {
+          "type": "number",
+          "format": "double"
+        },
+        "stability": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "intervals",
+        "rhythm",
+        "stability",
+        "coverage"
+      ]
+    },
+    "MatchResult": {
+      "type": "object",
+      "properties": {
+        "players": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PlayerResult"
+          }
+        },
+        "rated": {
+          "type": "boolean"
+        },
+        "technical": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "rated",
+        "technical",
+        "players"
+      ]
+    },
+    "MatchState": {
+      "type": "string",
+      "enum": [
+        "created",
+        "waiting",
+        "ready_check",
+        "countdown",
+        "singing",
+        "collecting",
+        "finished",
+        "cancelled",
+        "failed"
+      ]
+    },
+    "Outcome": {
+      "type": "string",
+      "enum": [
+        "win",
+        "draw",
+        "loss"
+      ]
+    },
+    "PlayerResult": {
+      "type": "object",
+      "properties": {
+        "axes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Axes"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "mmr_after": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "mmr_before": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Outcome"
+        },
+        "score": {
+          "description": "Канонический балл; null, если кривая неполная (техническое поражение).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "shift": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "standing": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "user_id",
+        "outcome"
+      ]
+    },
+    "PlayerView": {
+      "type": "object",
+      "properties": {
+        "accepted": {
+          "type": "boolean"
+        },
+        "connected": {
+          "type": "boolean"
+        },
+        "finished": {
+          "type": "boolean"
+        },
+        "left": {
+          "type": "boolean"
+        },
+        "name": {
+          "type": "string"
+        },
+        "points": {
+          "description": "Сколько точек кривой принято сервером.",
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "ready": {
+          "type": "boolean"
+        },
+        "slot": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "standing": {
+          "description": "Ранг или «Калибровка n/10»; MMR соперника не раскрывается.",
+          "type": "string"
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "slot",
+        "user_id",
+        "name",
+        "standing",
+        "accepted",
+        "ready",
+        "connected",
+        "finished",
+        "left",
+        "points"
+      ]
+    },
+    "SongRef": {
+      "type": "object",
+      "properties": {
+        "duration_s": {
+          "type": "number",
+          "format": "double"
+        },
+        "id": {
+          "type": "string"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "version",
+        "duration_s"
+      ]
+    }
+  }
+}
