@@ -4,29 +4,29 @@
 
 ## HTTP
 
-Все изменяющие запросы требуют заголовки `Origin` (из `APP_ORIGINS`), `X-Perepev-Request: 1` и `Content-Type: application/json`. Тело ограничено 16 КиБ. Ошибки имеют вид `{"error": "понятное сообщение"}`.
+Изменяющие JSON-запросы браузера требуют заголовки `Origin` (из `APP_ORIGINS`), `X-Perepev-Request: 1` и `Content-Type: application/json`. JSON-тело ограничено 16 КиБ. Загрузка аудио имеет отдельные типы и лимиты; маршруты обработчика используют Bearer-токен вместо браузерной CSRF-проверки. Ошибки имеют вид `{"error": "понятное сообщение"}`.
 
 | Метод и путь | Что делает |
 | --- | --- |
 | `GET /api/health` | состояние PostgreSQL и Valkey, экземпляр, соединения, матчи |
 | `GET /api/me` | `{profile, rating}` или `{profile: null}`; `profile` = `{id, email\|null, name, hasPassword, providers}` |
-| `POST /api/register` | `{email, name, password, consent: true, ageGroup: "14plus"\|"under14", parentName}` → 201, cookie сессии; `parentName` (2-64 characters) is required for `under14` |
+| `POST /api/register` | `{email, name, password, consent: true, ageGroup: "14plus"\|"under14", parentName}` → 201, cookie сессии; `parentName` (2–64 символа) обязателен для `under14` |
 | `POST /api/login` | `{email, password}` → cookie сессии |
 | `POST /api/logout` | удаляет сессию и закрывает её WebSocket на всех экземплярах |
 | `PATCH /api/me` | `{name}` |
-| `POST /api/password` | `{currentPassword, newPassword}`; отзывает все сессии и соединения пользователя. Without a password (Yandex ID / VK ID account): `{confirm: "УДАЛИТЬ", newPassword}` |
-| `POST /api/me/delete` | `{password}`, or `{confirm: "УДАЛИТЬ"}` without a password; deletes the account and all its data |
-| `GET /api/auth/providers` | `{providers: ["yandex", "vk"]}`: only providers whose credentials are configured |
-| `GET /api/auth/{yandex,vk}/start?return=/path` | `302` to the provider with PKCE S256 and a 64-character state; temporary cookie `perepev_oauth` (`SameSite=Lax`, 10 min) |
-| `GET /api/auth/{yandex,vk}/callback` | `302 {return}` with a session for a known account, `302 /account?signup={token}` for a new one, `302 /account?authError=state\|denied\|provider\|limit\|server` on failure |
-| `POST /api/auth/complete` | `{token, consent: true, ageGroup, parentName}` → 201 `{profile}` and a session; nickname `Певец-NNNN` |
-| `POST /api/complaints` | `{name, email, url, text}`, each ≤ 2000 characters, valid email → 201 `{id}`; at most 5 per IP per hour |
+| `POST /api/password` | `{currentPassword, newPassword}`; отзывает все сессии и соединения пользователя. OAuth-аккаунт без почты не может добавить пароль: API возвращает 400 |
+| `POST /api/me/delete` | `{password}`, либо `{confirm: "УДАЛИТЬ"}` для аккаунта без пароля; удаляет аккаунт и связанные данные |
+| `GET /api/auth/providers` | `{providers: ["yandex", "vk"]}`: только настроенные провайдеры |
+| `GET /api/auth/{yandex,vk}/start?return=/path` | `302` к провайдеру с PKCE S256 и state из 64 символов; временная cookie `perepev_oauth` (`SameSite=Lax`, 10 минут) |
+| `GET /api/auth/{yandex,vk}/callback` | `302 {return}` с сессией для известного аккаунта, `302 /account?signup={token}` для нового, `302 /account?authError=state\|denied\|provider\|limit\|server` при ошибке |
+| `POST /api/auth/complete` | `{token, consent: true, ageGroup, parentName}` → 201 `{profile}` и сессия; имя `Певец-NNNN` |
+| `POST /api/complaints` | `{name, email, url, text}`, каждое поле до 2000 символов, корректная почта → 201 `{id}`; до 5 обращений с IP за час |
 | `GET /api/attempts`, `POST /api/attempts` | приватная история одиночных попыток (до 100), повтор `id` идемпотентен |
 | `GET /api/rating` | MMR для показа, калибровка, ранг, защита |
 | `GET /api/catalog` | песни с версией эталона |
 | `GET /api/matches`, `GET /api/matches/{id}` | история дуэлей; итог матча только для участника |
 
-С одного адреса за 15 минут — не больше 12 регистраций и не больше 12 неудачных проверок пароля (вход, смена пароля, удаление кабинета). Успешный вход лимит не расходует. Счётчики общие для всех экземпляров. `POST /api/auth/complete` counts as a registration; provider sign-in starts are limited to 60 per IP per 15 minutes.
+С одного адреса за 15 минут — не больше 12 регистраций и не больше 12 неудачных проверок пароля (вход, смена пароля, удаление кабинета). Успешный вход лимит не расходует. Счётчики общие для всех экземпляров. `POST /api/auth/complete` учитывается как регистрация. Начало входа через провайдера ограничено 60 запросами с IP за 15 минут.
 
 ## WebSocket `/api/ws`
 
@@ -84,3 +84,20 @@
 | `kv:m:{id}:in`, `:out`, `:state`, `:curve:{slot}` | команды, события, снимок, кривые | 2 часа |
 | `kv:u:{user}:out` | события пользователя (матч найден, реванш) | 1 час |
 | `kv:sys:revoke` | отзыв сессий | 1 час |
+
+
+## Точная оценка и свои треки
+
+| Маршрут | Назначение |
+| --- | --- |
+| `POST /api/perf` | Создание попытки с согласием, песней и режимом звука |
+| `PUT /api/perf/{id}/chunk?seq=n` | Моно PCM16 16 кГц; до 400 КБ на кусок |
+| `POST /api/perf/{id}/finish`, `GET /api/perf/{id}` | Завершение загрузки и получение результата |
+| `GET /api/tracks`, `POST /api/tracks` | Список и создание своих треков после входа |
+| `PUT /api/tracks/{id}/audio` | WAV до 12 МБ |
+| `GET /api/tracks/{id}/files/{name}`, `DELETE /api/tracks/{id}` | Файлы владельца и удаление трека |
+| `POST /api/worker/lease`, `POST /api/worker/heartbeat` | Получение аренды и сигнал доступности обработчика |
+| `/api/worker/jobs/{id}/input`, `/asset/{name}` | Получение входных файлов |
+| `/api/worker/jobs/{id}/progress`, `/files/{name}`, `/complete`, `/fail` | Ход обработки, загрузка файлов и завершение |
+
+Точные структуры определены в `crates/api/src/worker.rs`, `perf.rs`, `tracks.rs`, `jobs.rs` и `gpu-worker/perepev_worker/client.py`. Сроки, размеры и правила оценки — в [ARCHITECTURE.md](../ARCHITECTURE.md).

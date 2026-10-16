@@ -25,3 +25,6 @@ presentation
 test-results
 
 work
+
+# Архив истории для переноса не входит в исходники и Docker-контекст.
+*.bundle

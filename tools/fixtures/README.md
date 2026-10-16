@@ -1,14 +1,7 @@
 # Эталоны прежней реализации
 
-`fixtures/scoring/*.json` и `fixtures/legacy/perepev.sqlite` созданы прежней версией (React + Fastify), которая сохранена под тегом `legacy-react-fastify`. В рабочем дереве её больше нет: в проекте одна формула оценки — `crates/scoring-core`.
+`fixtures/scoring/*.json` и `fixtures/legacy/perepev.sqlite` — тестовые данные предыдущей реализации на React и Fastify. SQLite-файл содержит вымышленные записи и не загружается в рабочую базу при запуске сайта.
 
-Пересоздать эталоны (результат должен совпасть байт в байт, если прежний код не менялся):
+Текущие тесты используют эти готовые файлы для сравнения формул и проверки переноса данных. Действующее ядро оценки находится в `crates/scoring-core`.
 
-```sh
-git worktree add ../perepev-legacy legacy-react-fastify
-(cd ../perepev-legacy/legacy && npm ci)
-ln -s ../perepev-legacy/legacy legacy          # генераторы ищут прежний код в ./legacy
-legacy/node_modules/.bin/tsx tools/fixtures/generate.ts
-(cd legacy && node ../tools/fixtures/make-legacy-db.mjs)
-rm legacy && git worktree remove ../perepev-legacy
-```
+Генераторы `tools/fixtures/generate.ts` и `make-legacy-db.mjs` требуют прежний код в папке `legacy` и его зависимости. В исходном архиве истории он отмечен тегом `legacy-react-fastify`; этот архив и тег не включены в текущую публикацию GitHub. Для обычной сборки и тестов пересоздавать эталоны не нужно. Если эталон меняется, сначала нужно объяснить изменение формулы, а затем обновить данные вместе с проверкой совместимости.

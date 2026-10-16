@@ -18,24 +18,23 @@
 
 Фон менее контрастный, чем бумага и элементы управления. Крупные блоки выровнены; небольшие наклоны сохранены у наклеек и карточек. Ширина контента ограничена 1440 px (1680 px на xwide). Вне раскладки wide абсолютная композиция переходит в последовательные блоки.
 
-## Layouts (2026-10-16)
+## Адаптивная раскладка
 
-Browsers do not support `@custom-media` yet, so pages write these queries literally; the names are a shared vocabulary for styles, tests and this document (see the comment in `web/src/lib/styles/tokens.css`).
+В стилях используются одинаковые границы ширины и высоты. Названия режимов нужны для согласования CSS и тестов; сами условия записаны в страницах явно.
 
-| Name | Query | Behaviour |
+| Режим | Условие | Поведение |
 | --- | --- | --- |
-| compact | `(max-width: 599px)` | Phone portrait: one column, compact wrapping nav tabs, icons in a column. |
-| short | `(max-height: 520px) and (orientation: landscape)` | Phone landscape: flow or two-column layouts; on the sing stage lyrics take the left 55 %, the pitch canvas and player keys the right; the cat and decorations are hidden. |
-| medium | `(min-width: 600px) and (max-width: 1099px) and (min-height: 521px)` | Tablets and narrow windows: flowing scenes; the sing stage uses two columns in landscape. |
-| wide | `(min-width: 1100px) and (min-height: 521px)` | Laptops and monitors: the absolute "scene" compositions from the mockups. |
-| xwide | `(min-width: 2200px), (min-aspect-ratio: 21/9)` | Container up to 1680 px; the root font size grows with `clamp()` (16 px up to 21 px). |
+| compact | ширина до 599 px | Одна колонка, перенос вкладок |
+| short | высота до 520 px, альбомная ориентация | Слова слева, график и кнопки справа; декорации скрыты |
+| medium | ширина 600–1099 px, высота от 521 px | Последовательные блоки, две колонки на сцене при достаточной ширине |
+| wide | ширина от 1100 px, высота от 521 px | Композиция музыкальной комнаты |
+| xwide | ширина от 2200 px или пропорции от 21:9 | Контейнер до 1680 px, размер текста растёт через `clamp()` |
 
-- "Not wide" (`not all and (min-width: 1100px) and (min-height: 521px)`) replaces the old `max-width: 900px` scene collapse: `.scene` flows in a column and `.deco` is hidden.
-- Touch targets: under `(pointer: coarse)` or "not wide", every interactive control is at least 44 px (`--tap`). Desktop mouse layouts keep the 40 px controls of the mockups. Styled `<select>` elements get an explicit `height`, because WebKit ignores `min-height` on them.
-- Safe areas: `viewport-fit=cover` plus `--safe-top/right/bottom/left` (`env(safe-area-inset-*)`) pad the header, footer, sing stage player and cookie banner.
-- Sing stage in portrait: lyrics, then the legend and pitch canvas, then the player keys pinned at the bottom above the home indicator. Rotation is a pure re-layout: the AudioContext and the recording continue.
-- While singing, `web/src/lib/ui/wakelock.ts` holds a Screen Wake Lock (feature-detected, re-requested when the tab becomes visible again, released on stop, finish or leave).
-- Check: `web/tests/e2e/responsive.spec.ts` runs 14 sizes (phones 360×740, 390×844, 430×932, 844×390, 932×430; tablets 768×1024, 1024×768, 820×1180, 1180×820; desktops 1280×720, 1366×768, 1920×1080, 2560×1440, 3440×1440) in Chromium and WebKit. It asserts no horizontal scroll, no overlapping controls, nav tabs inside their container, 44 px targets on touch sizes and the sing stage keys inside the viewport, and saves screenshots to `web/test-results/matrix/`.
+На сенсорных размерах элементы управления имеют область нажатия не меньше 44 px. Отступы учитывают безопасные области экрана через `env(safe-area-inset-*)`. В портретном режиме сначала идут слова, затем график и кнопки. Поворот экрана меняет раскладку без перезапуска AudioContext.
+
+Во время пения используется Screen Wake Lock, если браузер его поддерживает. Блокировка снимается при остановке или уходе со страницы.
+
+`web/tests/e2e/responsive.spec.ts` проверяет 14 размеров от 360×740 до 3440×1440 в Chromium и WebKit: горизонтальную прокрутку, перекрытия, навигацию, размеры кнопок и доступность управления пением. Снимки сохраняются в `web/test-results/matrix/`. Эмуляция размеров и движка не заменяет проверку физических телефонов.
 
 ## Маскот и взаимодействие
 

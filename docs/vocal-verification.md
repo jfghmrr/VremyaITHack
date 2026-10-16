@@ -1,6 +1,6 @@
 # Проверка вокального каталога и правок интерфейса
 
-> Historical protocol of the 24-song vocal catalog, kept as is. The catalog has since grown to 32 songs (14 RU / 18 EN) and the 2026-10-16 hackathon upgrade added new features and checks; current results are in [WORK_DONE.md](../WORK_DONE.md).
+> Архивный отчёт о предыдущей версии. Указанные ниже числа относятся к тому прогону. Проверка текущей версии — в [release-check.md](release-check.md).
 
 16 октября 2026 года. Рабочая папка: Perepev. Продолжение сессии «Создать MVP караоке-баттла ЭХО».
 

@@ -1,49 +1,26 @@
-# Precise-scoring benchmark (GPU worker)
+# Проверка точной оценки на GPU
 
-- Date: 2026-10-16T17:39:07+03:00
-- Worker hardware: RTX 3070 Ti 8 GB, driver 610.74, Windows 10 19045, PyTorch 2.11.0 + CUDA 12.8
-- Models: torchcrepe full (pitch); openai-whisper large-v3-turbo (words, fp16, beam 5); htdemucs only in speaker mode (no case here)
-- Server: test API `http://127.0.0.1:8091` (branch `wt/bench`), scoring `precise-1`, deadline 20 s after finish
-- Songs: cn-earth, cn-wonder, va-angel, jw-oh-mallory, jw-little-tomcat, jw-same-boat
-- Command: `uv run python bench/run_bench.py --hardware 'RTX 3070 Ti 8 GB, driver 610.74, Windows 10 19045, PyTorch 2.11.0 + CUDA 12.8' --models 'torchcrepe full (pitch); openai-whisper large-v3-turbo (words, fp16, beam 5); htdemucs only in speaker mode (no case here)' --out bench/RESULTS.md --json bench/results.json`
+Сохранённый прогон 16 октября 2026 года, 17:39 +03:00. Повторная проверка при публикации репозитория не запускала модели на этой видеокарте.
 
-Every take is the length of the song, streamed as 16 kHz mono PCM16 in 5 s chunks through the
-browser endpoints, with a fresh guest each time. Latency is from the `finish` response to the
-first poll that returned a final status (poll every 0.25 s). Axes are before caps;
-"Uncapped" is 100 x the weighted axes (scoring-core weights 0.45/0.25/0.15/0.15), i.e. the score
-the take would get without a cap. "Guide bleed" is the worker's own measure (`perepev_worker.bleed`,
-0..1, cap at >= 0.45) recomputed by the bench on the same take, because the API does not return it.
+- RTX 3070 Ti 8 ГБ, Windows 10 19045, драйвер 610.74, PyTorch 2.11.0 / CUDA 12.8.
+- torchcrepe `full`, Whisper `large-v3-turbo`, fp16, beam 5. Demucs в этих 54 сценариях не использовался.
+- Тестовый API `http://127.0.0.1:8091`, алгоритм `precise-1`, срок оценки 20 секунд.
+- Шесть песен: cn-earth, cn-wonder, va-angel, jw-oh-mallory, jw-little-tomcat, jw-same-boat.
 
-"Rhythm" is the server's blended «Ритм и слова» axis: when words are checked (every take here),
-`axes.rhythm = 0.5 x pitch rhythm + 0.5 x wordsScore` (scoring-core `precise.rs`), where wordsScore
-averages, per lyric word, how surely it was sung times its onset timing after the lag.
+## Методика
 
-The test API ran with `TRUST_PROXY=true`, and this run sent each take from its own
-`X-Forwarded-For` address in 198.18.0.0/15 (then the default; now opt-in with `--spread-ips`), because
-the API allows 30 performances per hour per client and a run sends 54. The "Server" line above is the
-server actually used: a local test API reached by the GPU PC through an SSH reverse tunnel.
+Для каждой песни подготовлены девять записей: исходный вокал (`perfect`), перенос на ±3 полутона, задержка 400 мс, ошибка ±1 полутон в одной фразе, вокал другой песни, синус по эталону, тишина и копия дорожек с задержкой 25 мс (`bleed`). Это искусственные примеры, а не записи участников.
 
-## Headline
+Каждая запись отправлялась как PCM16 16 кГц кусками по пять секунд через обычные маршруты попытки. Время считалось от ответа `/finish` до первого готового результата, с опросом раз в 0,25 секунды. Задания выполнялись последовательно через локальный SSH-туннель. Для обхода тогдашнего лимита 30 попыток на IP тестовый API принимал разные тестовые адреса; сейчас это отдельный параметр `--spread-ips`, не схема запуска публичного сервера.
 
-**48/48 stand-in cases pass; `perfect` gets the bleed cap on 6/6 by design** (the take is a sample
-copy of the guide stem, which is what the speaker-bleed check exists to catch). The cn-wonder
-`delay400` row with wordsSung 0.00 is undiagnosed and not representative (see finding 2).
+Оси в таблице указаны до ограничений. `Uncapped` — взвешенная сумма осей ×100. `Rhythm` включает поровну ритм и слова. `Guide bleed` вычислен самим бенчмарком на той же записи: API этого числа не возвращает.
 
-## Cases
+Ожидания: `perfect` и перенос тональности — не ниже 85; задержка должна снижать ритм, ошибка ноты — мелодическую оценку; чужой вокал и синус — не выше 40 с ограничением за слова; тишина — ниже 20; копия подсказки — не выше 30 с ограничением за сходство.
 
-| Case | Take | Mode | Expectation |
-|---|---|---|---|
-| perfect | guide vocal as is | headphones | score >= 85, no bleed cap |
-| shift+3 | guide pitch-shifted +3 semitones (phase vocoder) | headphones | score >= 85 |
-| shift-3 | guide pitch-shifted -3 semitones (phase vocoder) | headphones | score >= 85 |
-| delay400 | guide 400 ms late | headphones | rhythm < perfect |
-| detune | the longest phrase sung +/-1 semitone off, alternating every 0.5 s; the rest as is | headphones | intervals < perfect |
-| other-vocal | guide vocal of the next bench song in the same language | headphones | cap "words", score <= 40 |
-| hum | sine following the reference melody | headphones | cap "words", score <= 40 |
-| silence | digital silence | headphones | score < 20 |
-| bleed | user silent; instrumental + guide from a speaker at -6 dB, 25 ms late | headphones | cap "bleed", score <= 30 |
+## Результат
 
-## Results
+Все 54 задания завершились. **Исходные ожидания выполнены в 48 из 54 случаев.** Шесть строк `perfect` не прошли: точная копия вокальной подсказки получила ограничение за сходство. Это конфликт выбранного тестового примера с проверкой копирования, а не доказательство качества оценки настоящего певца. Статусы FAIL в таблице сохранены.
+
 
 | Song | Case | Status | Score | Uncapped | Intervals | Rhythm | Stability | Coverage | wordsSung | Cap | Guide bleed | Latency, s | Expectation |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -102,9 +79,9 @@ copy of the guide stem, which is what the speaker-bleed check exists to catch). 
 | jw-same-boat | silence | done | 0.0 | 0.0 | 0.00 | 0.00 | 0.00 | 0.00 | 0.00 | coverage | 0.00 | 2.0 | PASS |
 | jw-same-boat | bleed | done | 30.0 | 35.9 | 0.39 | 0.29 | 0.00 | 0.74 | 1.00 | bleed | 1.00 | 3.4 | PASS |
 
-## Summary by case
+## Сводка по сценарию
 
-| Case | Passed | Median score | Median latency, s | Max latency, s |
+| Сценарий | Пройдено | Медиана балла | Медиана ожидания, с | Максимум, с |
 |---|---|---|---|---|
 | perfect | 0/6 | 30.0 | 3.4 | 3.6 |
 | shift+3 | 6/6 | 96.3 | 3.0 | 3.4 |
@@ -116,56 +93,18 @@ copy of the guide stem, which is what the speaker-bleed check exists to catch). 
 | silence | 6/6 | 0.0 | 1.8 | 2.0 |
 | bleed | 6/6 | 30.0 | 2.5 | 3.4 |
 
-All takes: 54; final `done`: 54; not done (offline/failed/timeout/error): 0.
-Latency over done takes: median 2.6 s, max 3.6 s.
 
-Raw per-take data (all result fields except the curves): `bench/results.json`.
+## Что показывают измерения
 
-## Findings (written by hand for this run; not generated)
+- У `perfect` итог 30, хотя без ограничения было 92,6–97,9. Копия дорожки имеет сходство 1,00. Преобразованные на ±3 полутона копии набрали 87,1–98,9 без ограничения; это не проверка ложных срабатываний на людях.
+- Задержка 400 мс выходит за окно компенсации ±300 мс. Падает не только ритм слов, но и сравнение мелодии. У cn-wonder `delay400` распознанных слов не оказалось; причина не установлена, результат повторялся.
+- Ошибка одной фразы снижала оценку без ограничений примерно на 5,5–13,3 балла. Чужой вокал получил ограничение за слова во всех шести случаях; синус — 40, тишина — 0, копия подсказки — 30.
+- Медиана ожидания — 2,6 с, максимум — 3,6 с. Эти числа относятся к последовательным заданиям на указанном компьютере и сети.
 
-Expectations: 48 of 54 pass. All 6 failures are the same one: `perfect` gets the bleed cap. No
-threshold was changed to make a case pass.
+Отдельно в прежнем отчёте записаны наблюдения: первое задание после старта — 4,7 с, режим динамика — 4,2–4,4 с, шестое одновременно завершённое исполнение — 19,1 с. Эти замеры не входят в `results.json` и не дают гарантии пропускной способности. При росте очереди часть попыток может остаться с локальной оценкой.
 
-**Caveats.** The stand-ins are idealised. The `shift+3` / `shift-3` takes are phase-vocoded copies of
-the separated reference vocal, so their 87-99 is a ceiling for a real singer, not an estimate. The
-`bleed` take is a clean, delayed copy of the stems, with no room acoustics, speaker filtering or
-browser echo cancellation, and it runs in headphones mode (the only mode in which the app plays the
-guide). `hum` is a pure sine. Two `other-vocal` donors are shorter than the song and zero-padded
-(cn-earth, 13.87 s, under va-angel; jw-oh-mallory, 13.97 s, under jw-same-boat). Latencies were
-measured one job at a time over a local SSH tunnel, so they are a best case. The "measured
-separately" numbers in finding 5 (first job, speaker mode, a burst of 6) are manual observations from
-separate runs and are not in `results.json`.
+## Ограничения и повторение
 
-1. **perfect: bleed cap on 6/6 (score 30.0; uncapped 92.6-97.9).** The take is a sample-exact copy
-   of `guide.mp3`, and the speaker-bleed check (GCC-PHAT waveform correlation, cap at guide >= 0.45)
-   exists to catch exactly that: guide bleed is 1.00 on every song. The expectation "perfect must not
-   get a bleed cap" cannot hold for a copy of the stem without disabling the anti-cheat check. A take
-   that is not a copy of the stem, `shift+3` / `shift-3` (phase vocoder), scores 87.1-98.9 with guide
-   bleed 0.00-0.29 and no cap. A real voice singing along in headphones was not available, so the
-   headphones false-positive question is answered only by these stand-ins.
-2. **delay400: the blended rhythm axis drops as expected (0.01-0.75 vs 0.81-0.97), but the whole
-   score collapses** (uncapped 19.8-65.4; intervals 0.19-0.50, stability 0.02-0.86). scoring-core
-   searches the lag only within +-0.3 s (`MAX_LAG`). With the take 0.4 s late, the chosen lag is
-   arbitrary (-0.30 ... +0.23 s) and changes between runs (va-angel: uncapped 33.0 in the first run,
-   65.4 here). Both halves of the blended axis fall. Word timing is scored after that lag, so it drops
-   (wordsScore 0.00-0.37 vs 0.77-0.94; va-angel about unchanged, 0.78 -> 0.79). The pitch-rhythm half falls at
-   least as far, from 1.00 to 0.00-0.23 on five songs. Recovered as `2 x rhythm - wordsScore`, it drops
-   further than wordsScore on 5 of 6 songs and about equally on jw-oh-mallory. So the drop is not
-   mostly word timing. A singer whose recording is offset by more than 0.3 s (for example, uncompensated
-   Bluetooth output latency) loses most of the score. The cn-wonder `delay400` row (wordsSung 0.00)
-   repeated in both runs and in two more single reruns, while the other songs kept 0.92-1.00. Its cause
-   is undiagnosed (the API does not return the recognised text), so it is not representative.
-3. **detune: intervals drop** (0.83-0.91 vs 0.94-0.99 for perfect), stability too (0.59-0.94);
-   uncapped 82.7-90.7. One badly sung phrase costs about 5.5-13.3 points (perfect minus detune,
-   uncapped, from the table: cn-earth 13.3, cn-wonder 11.6, va-angel 6.1, jw-oh-mallory 7.2,
-   jw-little-tomcat 7.1, jw-same-boat 5.5).
-4. **other-vocal**: words cap 6/6, score 9.9-31.0. **hum**: words cap 6/6 at exactly 40.0 (uncapped
-   64.0-86.6: the melody is right, the cap is what holds the score at 40). Its blended rhythm is 0.50
-   because the sine has perfect note timing (pitch rhythm 1.00) and no words (wordsScore 0.00):
-   0.5 x 1.00 + 0.5 x 0.00. va-angel shows 0.41 because pitch rhythm is scaled by coverage / 0.8, and
-   the hum covers 0.65 there. **silence**: 0.0 (coverage cap). **bleed**: bleed cap 6/6, score 30.0.
-5. **Latency**: every take was final 1.3-3.6 s after `finish` (deadline 20 s). Measured separately
-   on the same PC: the first job after a worker start 4.7 s; speaker mode (htdemucs + whisper) on
-   29.4-29.7 s songs 4.2-4.4 s; six takes finished at the same moment are processed one after another
-   (about 3.1 s each), the sixth was done at 19.1 s, so a seventh simultaneous one would miss the
-   deadline and show the provisional score.
+Нет акустики комнаты, настоящего эхоподавления браузера и разнообразия человеческих голосов. Синус и цифровая копия динамика упрощают реальные условия. У двух подставленных вокалов конец заполнен тишиной из-за меньшей длительности. Для оценки качества нужны записи людей с экспертной разметкой, частота ложных ограничений и задержки при параллельной нагрузке.
+
+Исходные результаты — [results.json](results.json), сценарий — [run_bench.py](run_bench.py). Запуск из `gpu-worker`: `uv run python bench/run_bench.py --help`. Не запускайте нагрузочный сценарий на рабочей базе с пользовательскими данными.
