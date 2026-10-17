@@ -1,6 +1,6 @@
 # Протокол HTTP и WebSocket, версия 1
 
-Типы сообщений описаны в `crates/api/src/protocol.rs`. JSON-схемы лежат в `contracts/` (`perepev-api schemas contracts`), типы клиента генерируются из них в `web/src/lib/api/types.ts` (`node web/scripts/gen-types.mjs`). CI проверяет, что схемы и типы не устарели.
+Типы сообщений описаны в `crates/api/src/protocol.rs`. JSON-схемы лежат в `contracts/` (`perepev-api schemas contracts`), типы клиента генерируются из них в `web/src/lib/api/types.ts` (`node web/scripts/gen-types.mjs`). После изменения протокола нужно повторить генерацию схем и типов и проверить получившиеся изменения в Git.
 
 ## HTTP
 

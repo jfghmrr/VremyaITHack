@@ -79,7 +79,7 @@ npm test
 npm run build
 ```
 
-`npm test` и `npm run build` сначала собирают WASM. Rust-проверки: `cargo test --release --workspace` и `cargo clippy --release --workspace --all-targets -- -D warnings`. Браузерные и интеграционные тесты запускают на отдельной базе: они создают пользователей и матчи. Примеры команд находятся в `.github/workflows/ci.yml` и [отчёте проверки](docs/release-check.md).
+`npm test` и `npm run build` сначала собирают WASM. Rust-проверки: `cargo test --release --workspace` и `cargo clippy --release --workspace --all-targets -- -D warnings`. Браузерные и интеграционные тесты запускают на отдельной базе: они создают пользователей и матчи. Примеры команд находятся в [отчёте проверки](docs/release-check.md). Автоматический запуск проверок в GitHub Actions отключён.
 
 ## Ограничения
 
