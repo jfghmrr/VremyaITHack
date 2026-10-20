@@ -12,7 +12,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, put};
 use axum::{Json, Router};
 use scoring_core::Song;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use std::path::PathBuf;
 use uuid::Uuid;
@@ -40,6 +40,11 @@ pub fn routes() -> Router<AppState> {
 
 pub fn upload_routes() -> Router<AppState> {
     crate::util::body_limit(Router::new().route("/api/tracks/{id}/audio", put(audio)), AUDIO_MAX)
+}
+
+/// Правка текста и времени строк своего трека: JSON до 64 КБ (до 600 слов).
+pub fn lyrics_routes() -> Router<AppState> {
+    crate::util::body_limit(Router::new().route("/api/tracks/{id}/lyrics", put(lyrics)), LYRICS_MAX)
 }
 
 pub fn tracks_dir(st: &AppState) -> PathBuf {
@@ -235,6 +240,133 @@ async fn remove(State(st): State<AppState>, Authed(s): Authed, Path(id): Path<Uu
     Ok(StatusCode::NO_CONTENT)
 }
 
+pub const LYRICS_MAX: usize = 64 * 1024;
+const MAX_LINES: usize = 80;
+const MAX_LINE_WORDS: usize = 40;
+const MAX_WORDS: usize = 600;
+const MAX_WORD_CHARS: usize = 40;
+const MIN_WORD_S: f64 = 0.01;
+const LYRICS_EDITS_PER_HOUR: i64 = 120;
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct LyricsEdit {
+    lines: Vec<EditLine>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EditLine {
+    words: Vec<EditWord>,
+}
+
+#[derive(Deserialize)]
+#[serde(deny_unknown_fields)]
+struct EditWord {
+    text: String,
+    start_s: f64,
+    end_s: f64,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+struct TimedWord {
+    text: String,
+    start_s: f64,
+    end_s: f64,
+}
+
+fn millis(x: f64) -> f64 {
+    (x * 1000.0).round() / 1000.0
+}
+
+/// Проверяет правку владельца: число строк и слов, текст слов, времена по возрастанию
+/// внутри отрывка. Времена округляются до миллисекунды до проверки, мат маскируется.
+/// Возвращает строки слов и число замаскированных слов.
+fn check_lyrics(edit: LyricsEdit, duration_s: f64) -> Result<(Vec<Vec<TimedWord>>, usize), &'static str> {
+    if edit.lines.len() > MAX_LINES {
+        return Err("Слишком много строк: не больше 80.");
+    }
+    if edit.lines.iter().map(|l| l.words.len()).sum::<usize>() > MAX_WORDS {
+        return Err("Слишком много слов: не больше 600.");
+    }
+    let mut masked = 0;
+    let mut previous = 0.0;
+    let mut lines = Vec::with_capacity(edit.lines.len());
+    for line in edit.lines {
+        if line.words.is_empty() || line.words.len() > MAX_LINE_WORDS {
+            return Err("В каждой строке должно быть от 1 до 40 слов.");
+        }
+        let mut words = Vec::with_capacity(line.words.len());
+        for w in line.words {
+            // Невидимые символы форматирования убираются: с ними слово обходило бы маскирование.
+            let cleaned = crate::profanity::strip_format(&w.text);
+            let text = cleaned.trim();
+            let chars = text.chars().count();
+            if chars == 0 || chars > MAX_WORD_CHARS || text.chars().any(|c| c.is_whitespace() || c.is_control()) {
+                return Err("Слово должно быть без пробелов и не длиннее 40 символов.");
+            }
+            if !text.chars().any(char::is_alphanumeric) {
+                return Err("В каждом слове нужна хотя бы одна буква или цифра.");
+            }
+            if !w.start_s.is_finite() || !w.end_s.is_finite() {
+                return Err("Некорректное время слова.");
+            }
+            let (start_s, end_s) = (millis(w.start_s), millis(w.end_s));
+            if start_s < previous || end_s - start_s < MIN_WORD_S - 1e-9 || end_s > duration_s + 1e-9 {
+                return Err("Времена слов должны идти по порядку и не выходить за отрывок.");
+            }
+            previous = end_s;
+            let (text, count) = crate::profanity::mask(text);
+            masked += count;
+            words.push(TimedWord { text, start_s, end_s });
+        }
+        lines.push(words);
+    }
+    Ok((lines, masked))
+}
+
+/// lyrics.words.json (v1) и строки, фразы reference.json из одних и тех же слов: клиент
+/// (`parseWordTiming`) требует, чтобы текст строки совпадал со словами, а начало — с первым словом.
+fn lyrics_files(reference: &mut Value, lines: &[Vec<TimedWord>]) -> Value {
+    reference["lyrics"] = lines
+        .iter()
+        .map(|l| json!({ "t": l[0].start_s, "text": l.iter().map(|w| w.text.as_str()).collect::<Vec<_>>().join(" ") }))
+        .collect();
+    reference["phrases"] = lines.iter().map(|l| json!({ "start_s": l[0].start_s, "end_s": l[l.len() - 1].end_s })).collect();
+    json!({ "v": 1, "lines": lines.iter().enumerate().map(|(i, l)| json!({ "line": i, "words": l })).collect::<Vec<_>>() })
+}
+
+/// Владелец исправляет распознанный текст и времена строк готового трека. Мелодия
+/// (`f0_midi`), id и остальные поля эталона не меняются; переписываются строки, фразы и слова.
+async fn lyrics(State(st): State<AppState>, Authed(s): Authed, Path(id): Path<Uuid>, body: Bytes) -> ApiResult<Json<Value>> {
+    // Считается каждая попытка, и неверная тоже, до чтения базы и файлов.
+    st.rate_limit("lyrics", &s.user.id.to_string(), LYRICS_EDITS_PER_HOUR, 3600, "Слишком много сохранений. Подожди немного.").await?;
+    own(&st, id, s.user.id).await?;
+    if ready(&st, id, Some(s.user.id)).await?.is_none() {
+        return Err(ApiError::new(StatusCode::CONFLICT, "Трек ещё не готов: текст можно править после обработки."));
+    }
+    let dir = track_dir(&st, id);
+    let mut reference: Value = jobs::read_file(&dir.join("reference.json"))
+        .await?
+        .and_then(|b| serde_json::from_slice(&b).ok())
+        .filter(Value::is_object)
+        .ok_or_else(not_found)?;
+    let duration_s = reference["duration_s"].as_f64().ok_or_else(not_found)?;
+    let edit: LyricsEdit = serde_json::from_slice(&body).map_err(|_| ApiError::bad("Некорректный текст трека."))?;
+    let (lines, masked) = check_lyrics(edit, duration_s).map_err(ApiError::bad)?;
+    let words = lyrics_files(&mut reference, &lines);
+    let internal = |e: serde_json::Error| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, e.to_string());
+    let reference = serde_json::to_vec(&reference).map_err(internal)?;
+    let words_bytes = serde_json::to_vec(&words).map_err(internal)?;
+    if parse_reference(&reference).is_none() {
+        return Err(ApiError::bad("Некорректный текст трека."));
+    }
+    // Каждый файл заменяется атомарно (временный файл и переименование).
+    jobs::write_file(&dir.join("lyrics.words.json"), &words_bytes).await?;
+    jobs::write_file(&dir.join("reference.json"), &reference).await?;
+    Ok(Json(json!({ "lines": words["lines"], "masked": masked })))
+}
+
 /// Удаляет файлы трека, его задачу и её вход.
 async fn delete_files(st: &AppState, id: Uuid, job: Option<Uuid>) -> ApiResult<()> {
     if let Some(job) = job {
@@ -329,6 +461,64 @@ mod tests {
         assert_eq!(track_status(Some("done"), None, false, false), ("ready", None));
         assert_eq!(track_status(Some("failed"), Some("timeout"), false, true), ("failed", Some(TIMEOUT)));
         assert_eq!(track_status(Some("failed"), Some("CUDA out of memory"), false, true), ("failed", Some(FAILED)));
+    }
+
+    type Row<'a> = &'a [(&'a str, f64, f64)];
+
+    fn edit(lines: &[Row]) -> LyricsEdit {
+        LyricsEdit {
+            lines: lines
+                .iter()
+                .map(|l| EditLine { words: l.iter().map(|&(text, start_s, end_s)| EditWord { text: text.into(), start_s, end_s }).collect() })
+                .collect(),
+        }
+    }
+
+    #[test]
+    fn lyrics_edit_is_checked_rounded_and_masked() {
+        let (lines, masked) =
+            check_lyrics(edit(&[&[(" Раз", 1.0004, 1.4), ("два,", 1.4, 1.9)], &[("бля", 3.0, 3.5)]]), 10.0).expect("valid edit");
+        assert_eq!(masked, 1);
+        assert_eq!(lines[0][0], TimedWord { text: "Раз".into(), start_s: 1.0, end_s: 1.4 });
+        assert_eq!(lines[1][0].text, "б**");
+        let (hidden, masked) = check_lyrics(edit(&[&[("х\u{200B}уй", 1.0, 1.5), ("\u{FEFF}раз", 1.5, 2.0)]]), 10.0).unwrap();
+        assert_eq!((hidden[0][0].text.as_str(), hidden[0][1].text.as_str(), masked), ("х**", "раз", 1));
+        assert!(check_lyrics(edit(&[&[("\u{200B}", 1.0, 1.5)]]), 10.0).is_err(), "только невидимые символы — пустое слово");
+        assert!(check_lyrics(edit(&[]), 10.0).is_ok(), "все строки можно удалить");
+        let bad: [&[Row]; 9] = [
+            &[&[]],
+            &[&[("раз", 2.0, 2.5)], &[("два", 2.4, 3.0)]],
+            &[&[("раз", 2.0, 2.0)]],
+            &[&[("раз", 9.5, 10.5)]],
+            &[&[("раз", -0.5, 0.5)]],
+            &[&[("два слова", 1.0, 2.0)]],
+            &[&[("—", 1.0, 2.0)]],
+            &[&[("", 1.0, 2.0)]],
+            &[&[("раз", f64::NAN, 2.0)]],
+        ];
+        for lines in bad {
+            assert!(check_lyrics(edit(lines), 10.0).is_err());
+        }
+        let long = "а".repeat(41);
+        assert!(check_lyrics(edit(&[&[(long.as_str(), 1.0, 2.0)]]), 10.0).is_err());
+        let many: Vec<(&str, f64, f64)> = (0..41).map(|i| ("ла", i as f64 * 0.1, i as f64 * 0.1 + 0.05)).collect();
+        assert!(check_lyrics(edit(&[&many]), 10.0).is_err());
+        let rows: Vec<Vec<(&str, f64, f64)>> = (0..81).map(|i| vec![("ла", i as f64 * 0.1, i as f64 * 0.1 + 0.05)]).collect();
+        let rows: Vec<Row> = rows.iter().map(Vec::as_slice).collect();
+        assert!(check_lyrics(edit(&rows), 10.0).is_err());
+    }
+
+    #[test]
+    fn lyrics_files_keep_melody_and_match_words() {
+        let mut reference = json!({ "id": "my-1", "hop_ms": 10, "duration_s": 10.0, "f0_midi": [null, 60.5], "lyrics": [], "phrases": [] });
+        let (lines, _) = check_lyrics(edit(&[&[("Раз", 1.0, 1.4), ("два", 1.4, 1.9)], &[("три", 3.0, 3.5)]]), 10.0).unwrap();
+        let words = lyrics_files(&mut reference, &lines);
+        assert_eq!(reference["f0_midi"], json!([null, 60.5]));
+        assert_eq!(reference["id"], "my-1");
+        assert_eq!(reference["lyrics"], json!([{ "t": 1.0, "text": "Раз два" }, { "t": 3.0, "text": "три" }]));
+        assert_eq!(reference["phrases"], json!([{ "start_s": 1.0, "end_s": 1.9 }, { "start_s": 3.0, "end_s": 3.5 }]));
+        assert_eq!(words["v"], 1);
+        assert_eq!(words["lines"][1], json!({ "line": 1, "words": [{ "text": "три", "start_s": 3.0, "end_s": 3.5 }] }));
     }
 
     #[test]

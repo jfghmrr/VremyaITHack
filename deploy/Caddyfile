@@ -50,12 +50,17 @@
 		-Server
 	}
 	# Сборка: файлы с хешем в имени не меняются; version.json SvelteKit проверяет после
-	# обновления сайта, поэтому он всегда сверяется с сервером.
-	header /_app/immutable/* Cache-Control "public, max-age=31536000, immutable"
+	# обновления сайта, поэтому он всегда сверяется с сервером. Долгий кеш только найденным
+	# файлам: 404 на удалённый после обновления файл сборки или шрифт не запоминается.
+	header /_app/immutable/* Cache-Control "public, max-age=31536000, immutable" {
+		match status 2xx 304
+	}
 	header /_app/version.json Cache-Control "no-cache"
 	# Файлы песен без хеша в имени: браузер сверяет их с сервером (ETag даёт 304).
 	header /songs/* Cache-Control "no-cache"
-	header /fonts/* Cache-Control "public, max-age=604800"
+	header /fonts/* Cache-Control "public, max-age=604800" {
+		match status 2xx 304
+	}
 	# Графика версионирована параметром ?v=, неделя кеша экономит повторные проверки.
 	# Только для найденных файлов: отсутствующая картинка (404) не запоминается на неделю.
 	header /art/* Cache-Control "public, max-age=604800" {

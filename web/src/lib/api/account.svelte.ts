@@ -2,6 +2,7 @@
 import { api } from "./http";
 import type { Profile, Summary as RatingSummary } from "./types";
 import type { AgeGroup } from "#lib/auth/age.ts";
+import { resetSearch } from "#lib/live/client.svelte.ts";
 
 /** Профиль кабинета. У входа через Яндекс ID или VK ID нет почты и пароля. */
 export type AccountProfile = Omit<Profile, "email"> & {
@@ -60,4 +61,6 @@ export async function logout() {
   await api("logout", { method: "POST" });
   account.profile = null;
   account.rating = null;
+  // Поиск соперника этого игрока не продолжается после входа другим аккаунтом.
+  resetSearch();
 }

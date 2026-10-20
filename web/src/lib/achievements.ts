@@ -1,8 +1,11 @@
 export type Achievement = { id: string; label: string; description: string; icon: string; got: boolean };
 export type AchievementAttempt = { songId: string; score: number };
-export type AchievementMatch = { state: string; outcome: string | null };
+/** `mode`: «Вместе» (`coop`) — совместное исполнение, а не дуэль с соперником. */
+export type AchievementMatch = { state: string; outcome: string | null; mode?: string };
 
-export function achievementsOf(attempts: AchievementAttempt[], matches: AchievementMatch[]): Achievement[] {
+export function achievementsOf(attempts: AchievementAttempt[], allMatches: AchievementMatch[]): Achievement[] {
+  // Дуэльные награды — только за дуэли: «Вместе» соперника и победителя не имеет.
+  const matches = allMatches.filter(m => m.mode !== 'coop');
   return [
     { id: "first", label: "Первая песня", description: "Начало твоей музыкальной истории", got: attempts.length >= 1, icon: "star" },
     { id: "five", label: "Пять попыток", description: "Пять выходов к микрофону", got: attempts.length >= 5, icon: "tape" },

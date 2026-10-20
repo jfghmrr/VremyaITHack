@@ -1,5 +1,6 @@
 <script lang="ts">
-  // Страница ошибки в стиле комнаты: бумажная записка и смущённый кот. Навигация и
+  // Страница ошибки в стиле комнаты: бумажная записка и кот, уставший над ноутбуком с ошибкой
+  // (поза «unplugged», та же, что при сбое микрофона или связи; правка P7). Навигация и
   // подвал остаются (страница рендерится внутри общего макета). Текст ошибки
   // фреймворка (англ. «Not Found» и т. п.) не показывается.
   import { page } from "$app/state";
@@ -31,13 +32,13 @@
       {/if}
     </div>
   </div>
-  <div class="cat"><Cat mood="shy" size="100%" /></div>
+  <div class="cat"><Cat mood="unplugged" size="100%" /></div>
 </section>
 
 <style>
   .lost {
     display: grid;
-    grid-template-columns: minmax(0, 560px) minmax(160px, 300px);
+    grid-template-columns: minmax(0, 560px) minmax(200px, 420px);
     justify-content: center;
     align-items: center;
     gap: clamp(24px, 5vw, 80px);
@@ -69,8 +70,11 @@
     font-size: var(--t-l);
     rotate: 8deg;
   }
+  /* Штамп с кодом занимает только правый верхний угол: заголовок отступает на его ширину
+     (а не на 3.2em) и не переносится на широкой записке; на телефоне строки уравнены. */
   h1 {
-    padding-right: 3.2em;
+    padding-right: 64px;
+    text-wrap: balance;
     font: 700 clamp(2.1rem, 3.6vw, 3.2rem) / 1.05 var(--font-hand);
     letter-spacing: 0;
   }
@@ -84,10 +88,12 @@
     gap: var(--s-3);
     margin-top: var(--s-2);
   }
+  /* Поза горизонтальная: кот лежит на тетради у ноутбука, чуть наклонён, как наклейка. */
   .cat {
     justify-self: center;
     width: 100%;
-    max-width: 300px;
+    max-width: 420px;
+    rotate: 3deg;
   }
   /* compact: телефон в портрете — кот над запиской, без пустого экрана. */
   @media (max-width: 599px) {
@@ -99,7 +105,7 @@
     }
     .cat {
       order: -1;
-      max-width: 150px;
+      max-width: 230px;
     }
     .card {
       padding: var(--s-6) var(--s-5) var(--s-5);
@@ -108,7 +114,7 @@
   /* short: телефон в ландшафте — записка и кот рядом, кот меньше. */
   @media (max-height: 520px) and (orientation: landscape) {
     .lost {
-      grid-template-columns: minmax(0, 520px) 150px;
+      grid-template-columns: minmax(0, 520px) 220px;
       min-height: 0;
       padding: var(--s-4) 0;
     }

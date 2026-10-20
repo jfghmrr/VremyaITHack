@@ -12,6 +12,7 @@ export class Capture {
   /** Сырой звук окна попытки по порядку, без пропусков: первый отсчёт — нулевая секунда песни. */
   onPcm: ((pcm: Float32Array, sampleRate: number) => void) | null = null;
   private delivered = 0;
+  private flushed: (() => void) | null = null;
 
   private constructor(
     readonly ctx: AudioContext,
@@ -22,7 +23,8 @@ export class Capture {
   ) {}
 
   /** echoCancellation — режим «Без наушников»: браузер приглушает звук песни из динамика. */
-  static async open(onFrame: (f: PitchFrame) => void, deviceId?: string, options: { echoCancellation?: boolean } = {}): Promise<Capture> {
+  /** onFrame получает кадр и усиление анализа (×1…×4, level.ts): насколько тихий микрофон подтянут для распознавания (×1 без замера ноты). */
+  static async open(onFrame: (f: PitchFrame, gain: number) => void, deviceId?: string, options: { echoCancellation?: boolean } = {}): Promise<Capture> {
     if (!navigator.mediaDevices?.getUserMedia) throw new Error("Микрофон доступен только по HTTPS или на localhost.");
     const ctx = new AudioContext({ latencyHint: "interactive" });
     let worker: Worker | null = null;
@@ -55,9 +57,13 @@ export class Capture {
       worker.postMessage({ port: channel.port1, sampleRate: ctx.sampleRate }, [channel.port1]);
       node.port.postMessage({ kind: "pitch-port", port: channel.port2 }, [channel.port2]);
       const capture = new Capture(ctx, stream, node, source, worker);
-      worker.onmessage = ({ data }: MessageEvent<{ time: number; midi: number | null; clarity: number; rms: number }>) => {
+      worker.onmessage = ({ data }: MessageEvent<{ time: number; midi: number | null; clarity: number; rms: number; gain?: number } | { kind: "flushed" }>) => {
+        if ("kind" in data) {
+          capture.flushed?.();
+          return;
+        }
         const f: PitchFrame = { t: data.time - capture.start, midi: data.midi, clarity: data.clarity, rms: data.rms };
-        onFrame(f);
+        onFrame(f, data.gain ?? 1);
         if (f.t >= 0 && data.time <= capture.end) capture.frames.push(f);
       };
       node.port.onmessage = ({ data }) => {
@@ -72,6 +78,35 @@ export class Capture {
       await ctx.close();
       throw e;
     }
+  }
+
+  /**
+   * Замер протяжной ноты певца (только проверка микрофона одиночного пения): у тихого певца
+   * порог детектора опускается. false — порог зафиксирован до конца попытки. По умолчанию
+   * выключен: тренировка и дуэли работают с прежним порогом.
+   */
+  measure(on: boolean) {
+    this.worker.postMessage({ kind: "measure", on });
+  }
+
+  /**
+   * Конец записи. Детектор решает кадр с задержкой 30 мс (pitch.ts, VOICING.delay), поэтому кадр
+   * момента end приходит примерно через 60 мс (половина окна 21 мс, задержка 30 мс, доставка).
+   * flush() забирает последние кадры сразу: после него frames содержит кадр каждого окна до текущего.
+   * Без flush читать кадры не раньше end + 60 мс: так делают дуэль (end + 0,2 с) и тренировка
+   * (только картинка). Обещание выполняется и без ответа Worker — через timeout мс.
+   */
+  flush(timeout = 250): Promise<void> {
+    return new Promise((resolve) => {
+      const done = () => {
+        clearTimeout(timer);
+        if (this.flushed === done) this.flushed = null;
+        resolve();
+      };
+      const timer = setTimeout(done, timeout);
+      this.flushed = done;
+      this.worker.postMessage({ kind: "flush" });
+    });
   }
 
   begin(at: number, duration: number) {

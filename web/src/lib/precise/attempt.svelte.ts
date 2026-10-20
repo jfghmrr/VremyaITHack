@@ -8,11 +8,15 @@ import type { ScoreResult, Song } from "#lib/scoring/types.ts";
 /** Дольше 25 секунд после конца пения итог не ждём: досылка записи и опрос вместе. */
 const LIMIT_MS = 25_000;
 
-export const precise = $state<{ status: "pending" | "final" | "unchecked"; result: PreciseResult | null; mode: PlayMode }>({
+export const precise = $state<{ status: "pending" | "final" | "unchecked"; result: PreciseResult | null; mode: PlayMode; wordsCheck: boolean }>({
   status: "unchecked",
   result: null,
   mode: "headphones",
+  wordsCheck: true,
 });
+
+/** Пометка, пока ждём итог: у песен без проверки слов («wordsCheck»: false) не обещаем проверку слов. */
+export const pendingNote = (wordsCheck: boolean) => (wordsCheck ? "проверяем слова…" : "уточняем оценку…");
 
 let ticket = 0;
 
@@ -27,12 +31,14 @@ export function merged(local: ScoreResult, final: PreciseResult | null): ScoreRe
 /**
  * Следит за записью после конца пения; onFinal получает итог, сохранённый в истории.
  * mode — режим звука попытки: от него зависит совет при звуке из динамика.
+ * wordsCheck — проверяет ли сервер слова этой песни (поле «wordsCheck» в index.json).
  */
-export function settle(song: Song, provisional: ScoreResult, session: PerfSession | null, onFinal?: (result: ScoreResult) => void, mode: PlayMode = "headphones") {
+export function settle(song: Song, provisional: ScoreResult, session: PerfSession | null, onFinal?: (result: ScoreResult) => void, mode: PlayMode = "headphones", wordsCheck = true) {
   const t = ++ticket;
   precise.status = session ? "pending" : "unchecked";
   precise.result = null;
   precise.mode = mode;
+  precise.wordsCheck = wordsCheck;
   void (async () => {
     let final: PreciseResult | null = null;
     if (session) {

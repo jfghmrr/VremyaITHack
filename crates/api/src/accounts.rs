@@ -15,7 +15,7 @@ use uuid::Uuid;
 
 pub const COOKIE: &str = "perepev_session";
 /// Редакция документа «Согласие на обработку персональных данных» (web/src/routes/legal/consent).
-pub const CONSENT_VERSION: &str = "2026-10-17";
+pub const CONSENT_VERSION: &str = "2026-10-18";
 /// Слово подтверждения смены пароля и удаления для кабинета без пароля (вход через Яндекс ID или VK ID).
 pub const CONFIRM_PHRASE: &str = "УДАЛИТЬ";
 const CONFIRM_MESSAGE: &str = "Для подтверждения введи слово УДАЛИТЬ.";
@@ -463,9 +463,9 @@ async fn export(State(state): State<AppState>, Authed(s): Authed) -> ApiResult<R
             .bind(id)
             .fetch_all(&state.db)
             .await?;
-    type MatchRow = (Uuid, String, String, String, Option<String>, Option<f64>, time::OffsetDateTime, Option<Vec<u8>>);
+    type MatchRow = (Uuid, String, String, String, String, Option<String>, Option<f64>, time::OffsetDateTime, Option<Vec<u8>>, bool);
     let matches: Vec<MatchRow> = sqlx::query_as(
-        "SELECT m.id, m.kind, m.state, m.song_id, p.outcome, p.score, m.created_at, p.curve
+        "SELECT m.id, m.kind, m.mode, m.state, m.song_id, p.outcome, p.score, m.created_at, p.curve, p.share_voice
          FROM match_participants p JOIN matches m ON m.id = p.match_id WHERE p.user_id = $1 ORDER BY m.created_at",
     )
     .bind(id)
@@ -495,12 +495,14 @@ async fn export(State(state): State<AppState>, Authed(s): Authed) -> ApiResult<R
         "own_tracks": tracks.iter().map(|(tid, title, language, at, expires)| serde_json::json!({
             "id": tid, "title": title, "language": language, "created_at": ts(at), "expires_at": ts(expires),
         })).collect::<Vec<_>>(),
-        "matches": matches.iter().map(|(mid, kind, st, song, outcome, score, at, curve)| serde_json::json!({
-            "id": mid, "kind": kind, "state": st, "song_id": song, "outcome": outcome, "score": score, "created_at": ts(at),
+        "matches": matches.iter().map(|(mid, kind, mode, st, song, outcome, score, at, curve, share)| serde_json::json!({
+            "id": mid, "kind": kind, "mode": mode, "state": st, "song_id": song, "outcome": outcome, "score": score, "created_at": ts(at),
+            // «Вместе»: согласие поделиться голосом с партнёром для общего прослушивания.
+            "share_voice": share,
             "curve_tenths_of_semitone_50ms": curve.as_deref().map(crate::matches::curve_values),
         })).collect::<Vec<_>>(),
         "rating_events": rating_events.iter().map(|(mid, b, a, at)| serde_json::json!({ "match_id": mid, "mmr_before": b, "mmr_after": a, "at": ts(at) })).collect::<Vec<_>>(),
-        "not_stored": "Запись голоса уходит на сервер только при точной оценке и только с отдельного согласия; её обрабатывает компьютер команды в России, после оценки она удаляется, не позже чем через 10 минут, поэтому в выгрузку не входит. Итоги точной оценки и сведения об исполнениях хранятся сутки. Свои треки и их файлы удаляются через 24 часа; файлы в выгрузку не входят. Кривые высоты дуэлей хранятся 30 дней, затем удаляются; пока они есть, они включены в выгрузку. Адрес IP используется только для ограничения частоты запросов и хранится не дольше часа.",
+        "not_stored": "Запись голоса уходит на сервер в двух случаях, каждый раз только с отдельного согласия. При точной оценке её обрабатывает компьютер команды в России, после оценки она удаляется, не позже чем через 10 минут. В режиме «Вместе», если вы и партнёр оба согласились поделиться голосом, после песни на сервер уходит запись только ваших ходов: партнёр может прослушать её, пока она не удалена, не позже чем через 10 минут после получения; компьютер команды её не получает. Поэтому записи голоса в выгрузку не входят. Итоги точной оценки и сведения об исполнениях хранятся сутки. Свои треки и их файлы удаляются через 24 часа; файлы в выгрузку не входят. Кривые высоты дуэлей хранятся 30 дней, затем удаляются; пока они есть, они включены в выгрузку. Адрес IP используется только для ограничения частоты запросов и хранится не дольше часа.",
     });
     Ok((
         StatusCode::OK,

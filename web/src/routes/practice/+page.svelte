@@ -10,6 +10,7 @@
   import PianoRoll from "#lib/ui/PianoRoll.svelte";
   import type { PitchFrame } from "#lib/scoring/types.ts";
   import Cat from "#lib/brand/Cat.svelte";
+  import TitleStrip from "#lib/brand/TitleStrip.svelte";
 
   const song = last.song;
   const index = Number(page.url.searchParams.get("m") ?? 0);
@@ -30,6 +31,10 @@
   let ticket = 0;
 
   stage.dark = true;
+  // Пока фрагмент звучит, нижнее меню телефона скрыто (lib/ui/stage.svelte.ts).
+  $effect(() => {
+    stage.live = running || busy;
+  });
 
   function stop() {
     ticket++;
@@ -49,6 +54,7 @@
   onDestroy(() => {
     stop();
     stage.dark = false;
+    stage.live = false;
   });
 
   async function round(input: Capture) {
@@ -103,12 +109,24 @@
 <svelte:head><title>Тренировка — Перепев</title></svelte:head>
 
 {#if !song || !moment || !last.backing}
-  <section class="empty">
-    <Cat mood="empty" size={170} />
-    <div class="note-card sheet">
-      <h1>Фрагмент недоступен.</h1>
-      <p>Тренировка открывается из разбора, пока запись в этой вкладке.</p>
-      <a class="btn" href="/songs">К песням</a>
+  <!-- Ярлык и записка с котом — одна группа по центру окна (как страница ошибки): записка
+       объясняет, откуда открывается тренировка, а не стоит одной фразой посреди пустой стены. -->
+  <section class="empty-page" aria-labelledby="practice-title">
+    <TitleStrip text="Тренировка" id="practice-title" fastener="binder" />
+    <div class="empty">
+      <div class="note-card sheet">
+        <h2>Фрагмент недоступен.</h2>
+        <p>Тренировка открывается из разбора, пока запись в этой вкладке.</p>
+        <h3>Как открыть тренировку</h3>
+        <ol>
+          <li>Спой песню целиком.</li>
+          <li>На экране итога открой «Разбор и ошибки».</li>
+          <li>В списке «Что улучшить» нажми «Потренировать» у трудного места.</li>
+        </ol>
+        <p class="small muted">Тренировка не меняет балл и не сохраняет запись.</p>
+        <a class="btn btn-primary" href="/songs">К песням</a>
+      </div>
+      <span class="empty-cat" aria-hidden="true"><Cat mood="empty" size="100%" /></span>
     </div>
   </section>
 {:else}
@@ -123,7 +141,8 @@
       <p class="lyric"><mark>{lyric}</mark></p>
     </div>
     <div class="roll sheet">
-      <PianoRoll {song} frames={() => points} time={() => (mic ? from + mic.ctx.currentTime - begin : clock)} span={Math.max(4, to - from + 2)} />
+      <!-- Фраза тренировки бывает короче секунды голоса: своя линия сразу в тональности спетой попытки. -->
+      <PianoRoll {song} frames={() => points} time={() => (mic ? from + mic.ctx.currentTime - begin : clock)} span={Math.max(4, to - from + 2)} ownShift={last.result?.registerShift ?? null} />
       {#if running && clock < from}<div class="countdown"><span>{Math.ceil(from - clock)}</span></div>{/if}
     </div>
     <div class="controls">
@@ -139,24 +158,49 @@
 <style>
   .intro { position: relative; padding-right: 112px; min-height: 95px; }
   .practice-cat { position: absolute; top: -10px; right: 0; }
-  .empty {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: var(--s-6);
+  .empty-page {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    width: min(100%, 62rem);
     min-height: calc(100dvh - var(--chrome));
+    margin-inline: auto;
+    padding: var(--title-top) 0 var(--s-5);
+  }
+  .empty {
+    display: grid;
+    grid-template-columns: minmax(0, 32rem) minmax(12rem, 24rem);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--s-7);
+    padding-bottom: var(--s-7);
   }
   .note-card {
     display: grid;
     gap: var(--s-3);
     justify-items: start;
-    max-width: 420px;
-    padding: var(--s-5) var(--s-6);
+    padding: var(--s-6) var(--s-6) var(--s-5);
+    rotate: -0.6deg;
   }
-  .note-card h1 {
+  .note-card h2 {
     font-family: var(--font-hand);
-    font-size: 2.2rem;
+    font-size: 2.4rem;
     letter-spacing: 0;
+  }
+  .note-card h3 {
+    margin-top: var(--s-2);
+    font-size: var(--t-m);
+  }
+  .note-card ol {
+    display: grid;
+    gap: var(--s-1);
+    margin: 0;
+    padding-left: 1.3em;
+  }
+  .note-card .btn {
+    margin-top: var(--s-2);
+  }
+  .empty-cat {
+    display: block;
   }
   .practice {
     display: grid;
@@ -258,6 +302,20 @@
   .hint {
     color: var(--on-room-2);
   }
+  /* wide: тренировка помещается в окно — график занимает остаток высоты, клавиши
+     «Спеть фрагмент», «Спеть целиком» и «По кругу» не уходят под край на 1366×768. */
+  @media (min-width: 1100px) and (min-height: 521px) {
+    .practice {
+      grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+      height: calc(100svh - var(--chrome));
+      min-height: 520px;
+    }
+    .roll {
+      min-height: 0;
+      max-height: 460px;
+      overflow: hidden;
+    }
+  }
   /* Сенсорный экран или не wide: цели нажатия не меньше 44 px. */
   @media (pointer: coarse), not all and (min-width: 1100px) and (min-height: 521px) {
     .back,
@@ -285,11 +343,6 @@
     .controls .btn {
       flex: 1 1 100%;
     }
-    .empty {
-      flex-direction: column;
-      min-height: 0;
-      padding-top: var(--s-5);
-    }
   }
   /* short: график ниже, чтобы клавиши остались в окне. */
   @media (max-height: 520px) and (orientation: landscape) {
@@ -298,6 +351,21 @@
     }
     .roll {
       min-height: 190px;
+    }
+  }
+  @media not all and (min-width: 1100px) and (min-height: 521px) {
+    .empty-page { min-height: 0; padding-inline: 0; }
+    .empty { grid-template-columns: minmax(0, 1fr); justify-items: center; gap: var(--s-5); padding: var(--s-5) 0 0; }
+    .note-card { width: min(100%, 34rem); rotate: none; }
+    .empty-cat { width: 14rem; }
+  }
+  /* Телефон (PHONE_QUERY): «← К разбору» — стрелка в шапке; штамп остаётся справа. */
+  @media (max-width: 599px), (max-width: 799px) and (min-height: 521px) {
+    .practice header {
+      justify-content: flex-end;
+    }
+    .practice .back {
+      display: none;
     }
   }
 </style>

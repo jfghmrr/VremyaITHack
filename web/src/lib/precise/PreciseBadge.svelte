@@ -1,14 +1,14 @@
 <script lang="ts">
   // Пометка у балла: «предварительно», пока компьютер команды проверяет запись, затем
   // «слова проверены» или «слова не проверены» и объяснение ограничения балла.
-  import { precise } from "./attempt.svelte.ts";
+  import { pendingNote, precise } from "./attempt.svelte.ts";
 
   const cap = $derived(precise.result?.cap ?? null);
 </script>
 
 <div class="precise" role="status" aria-live="polite">
   {#if precise.status === "pending"}
-    <span class="badge pending">предварительно</span><span class="checking">проверяем слова…</span>
+    <span class="badge pending">предварительно</span><span class="checking">{pendingNote(precise.wordsCheck)}</span>
   {:else if precise.result?.wordsChecked}
     <span class="badge checked">слова проверены</span>
   {:else}

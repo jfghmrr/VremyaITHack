@@ -11,18 +11,29 @@ import numpy as np
 
 from .audio import load_audio, mp3_bytes, resample
 from .profanity import mask
-from .words import AsrWord, normalize
+from .words import AsrWord, keep_sung, normalize
 
 SR = 44100
 HOP_S = 0.01
 MAX_GAP_S = 0.6
 MAX_LINE_WORDS = 8
+# A karaoke line longer than this is split at its widest pause.
+MAX_LINE_S = 7.0
 MAX_DURATION_S = 60.0
 MIN_DURATION_S = 5.0
 MIN_WORD_S = 0.01
 # Reference melody only where the separated vocal is within 30 dB of its loud parts:
 # quiet separation residue would otherwise become "melody" nobody sings.
 VOCAL_GATE_DB = -30.0
+# Word timing: whisper's word timestamps on sung audio often include the silence before a
+# phrase or after its last word. The separated vocal shows where somebody actually sings.
+ACTIVITY_GATE_DB = -35.0
+ACTIVITY_FLOOR = 1e-3  # about -60 dBFS, as words.SILENCE_RMS
+CLOSE_GAP_S = 0.15  # gaps between syllables stay "singing"
+MIN_BLIP_S = 0.05  # shorter bursts are clicks or bleed
+TRIM_MIN_S = 0.15  # only trim silence at least this long
+TRIM_PAD_S = 0.05
+SILENT_REACH_S = 1.0  # a word this far from any singing is a hallucination
 ARTIST = "Свой трек"
 
 
@@ -49,15 +60,93 @@ def clean_words(raw: list[AsrWord], duration_s: float) -> list[AsrWord]:
     return words
 
 
-def group_lines(words: list[AsrWord], max_gap_s: float = MAX_GAP_S, max_words: int = MAX_LINE_WORDS) -> list[list[AsrWord]]:
-    """A new line starts after a pause longer than 0.6 s or when a line has 8 words."""
+def _runs(mask: np.ndarray) -> list[tuple[int, int]]:
+    """Half-open [start, end) index ranges where `mask` is True."""
+    edges = np.flatnonzero(np.diff(np.concatenate([[0], mask.astype(np.int8), [0]])))
+    return list(zip(edges[::2].tolist(), edges[1::2].tolist()))
+
+
+def vocal_activity(level: np.ndarray, hop: float = HOP_S) -> np.ndarray:
+    """Where the separated vocal sings, per 10 ms frame of its RMS level.
+
+    Within 35 dB of the loud parts and above about -60 dBFS; gaps shorter than 0.15 s are
+    closed (syllables, consonants), bursts shorter than 0.05 s are dropped.
+    """
+    level = np.asarray(level, dtype=np.float64)
+    if not len(level):
+        return np.zeros(0, dtype=bool)
+    threshold = max(float(np.percentile(level, 95)) * 10 ** (ACTIVITY_GATE_DB / 20), ACTIVITY_FLOOR)
+    active = level >= threshold
+    runs = _runs(active)
+    for (_, end), (start, _) in zip(runs, runs[1:]):
+        if (start - end) * hop < CLOSE_GAP_S:
+            active[end:start] = True
+    for start, end in _runs(active):
+        if (end - start) * hop < MIN_BLIP_S:
+            active[start:end] = False
+    return active
+
+
+def _frames(word: AsrWord, n: int, hop: float) -> tuple[int, int]:
+    return max(0, math.floor(word.start_s / hop + 1e-6)), min(n, math.ceil(word.end_s / hop - 1e-6))
+
+
+def refine_word_times(words: list[AsrWord], active: np.ndarray, hop: float = HOP_S) -> list[AsrWord]:
+    """Trim silence (at least 0.15 s) at the start or end of each word; never extend a word."""
+    out = []
+    for w in words:
+        i0, i1 = _frames(w, len(active), hop)
+        inside = np.flatnonzero(active[i0:i1]) + i0 if i1 > i0 else np.zeros(0, dtype=int)
+        if not len(inside):
+            out.append(w)
+            continue
+        start, end = w.start_s, w.end_s
+        if inside[0] * hop - start >= TRIM_MIN_S:
+            start = max(start, inside[0] * hop - TRIM_PAD_S)
+        if end - (inside[-1] + 1) * hop >= TRIM_MIN_S:
+            end = min(end, (inside[-1] + 1) * hop + TRIM_PAD_S)
+        out.append(AsrWord(text=w.text, start_s=round(start, 3), end_s=round(end, 3)))
+    return out
+
+
+def drop_silent_words(words: list[AsrWord], active: np.ndarray, hop: float = HOP_S,
+                      reach_s: float = SILENT_REACH_S) -> list[AsrWord]:
+    """Drop words with no singing within `reach_s` of them (whisper hallucinating on music).
+
+    Without any detected singing nothing is dropped: the gate, not the words, is then wrong.
+    """
+    voiced = np.flatnonzero(active)
+    if not len(voiced):
+        return words
+    reach = round(reach_s / hop)
+    kept = []
+    for w in words:
+        i0, i1 = _frames(w, len(active), hop)
+        lo, hi = np.searchsorted(voiced, [i0 - reach, i1 + reach])
+        if hi > lo:
+            kept.append(w)
+    return kept
+
+
+def _split(line: list[AsrWord], max_words: int, max_line_s: float) -> list[list[AsrWord]]:
+    """Split a too long line at its widest pause (on a tie, nearest the middle)."""
+    if len(line) < 2 or (len(line) <= max_words and line[-1].end_s - line[0].start_s <= max_line_s):
+        return [line]
+    k = max(range(1, len(line)), key=lambda i: (round(line[i].start_s - line[i - 1].end_s, 3), -abs(i - len(line) / 2)))
+    return _split(line[:k], max_words, max_line_s) + _split(line[k:], max_words, max_line_s)
+
+
+def group_lines(words: list[AsrWord], max_gap_s: float = MAX_GAP_S, max_words: int = MAX_LINE_WORDS,
+                max_line_s: float = MAX_LINE_S) -> list[list[AsrWord]]:
+    """A new line starts after a pause longer than 0.6 s. A line with more than 8 words or
+    longer than 7 s is split at its widest pause rather than after a fixed word count."""
     lines: list[list[AsrWord]] = []
     for w in words:
-        if lines and len(lines[-1]) < max_words and w.start_s - lines[-1][-1].end_s <= max_gap_s:
+        if lines and w.start_s - lines[-1][-1].end_s <= max_gap_s:
             lines[-1].append(w)
         else:
             lines.append([w])
-    return lines
+    return [part for line in lines for part in _split(line, max_words, max_line_s)]
 
 
 def _r(x: float) -> float:
@@ -104,14 +193,21 @@ def _fade(y: np.ndarray, sr: int) -> np.ndarray:
     return y
 
 
-def _gate_quiet(frames, vocals: np.ndarray, sr: int):
+def vocal_level(vocals: np.ndarray, sr: int, n: int) -> np.ndarray:
+    """RMS of the separated vocal for `n` 10 ms frames (the melody grid)."""
     from .pitch import SR as PITCH_SR, frame_rms
 
-    audio = resample(vocals, sr, PITCH_SR)
-    level = frame_rms(audio, len(frames))
+    return frame_rms(resample(vocals, sr, PITCH_SR), n)
+
+
+def _gate_level(frames, level: np.ndarray):
     loud = np.percentile(level, 95) if len(level) else 0.0
     threshold = loud * 10 ** (VOCAL_GATE_DB / 20)
     return [(t, m if i < len(level) and level[i] >= threshold else None) for i, (t, m) in enumerate(frames)]
+
+
+def _gate_quiet(frames, vocals: np.ndarray, sr: int):
+    return _gate_level(frames, vocal_level(vocals, sr, len(frames)))
 
 
 def _json_bytes(data: dict) -> bytes:
@@ -123,7 +219,7 @@ def process_track(wav_path: str | Path, language: str, title: str, *, margin_s: 
     """Turn an uploaded section (plus margins) into karaoke files for a private song."""
     from .pitch import MODEL as PITCH_MODEL, f0_frames
     from .separate import MODEL_NAME, separate
-    from .words import asr_model_name, transcribe
+    from .words import asr_model_name, transcribe_segments
 
     report = progress or (lambda stage: None)
     mix = load_audio(wav_path, SR, mono=False)
@@ -140,12 +236,18 @@ def process_track(wav_path: str | Path, language: str, title: str, *, margin_s: 
     vocal_mono = vocals.mean(axis=1)
 
     report("melody")
-    frames = _gate_quiet(f0_frames(vocal_mono, SR), vocal_mono, SR)
+    frames = f0_frames(vocal_mono, SR)
+    level = vocal_level(vocal_mono, SR, len(frames))
+    frames = _gate_level(frames, level)
 
     report("words")
+    segments = transcribe_segments(vocal_mono, SR, language, beam_size=5)
+    recognised = sum(len(s.words) for s in segments)
+    active = vocal_activity(level)
+    timed = drop_silent_words(refine_word_times(clean_words(keep_sung(segments), duration_s), active), active)
     masked_words = 0
     words = []
-    for w in clean_words(transcribe(vocal_mono, SR, language, beam_size=5), duration_s):
+    for w in timed:
         text, count = mask(w.text)
         masked_words += count
         words.append(AsrWord(text=text, start_s=w.start_s, end_s=w.end_s))
@@ -164,6 +266,8 @@ def process_track(wav_path: str | Path, language: str, title: str, *, margin_s: 
         "lines": len(lines),
         "words": len(words),
         "masked_words": masked_words,
+        # Hallucinated segments and words far from any singing that were left out.
+        "dropped_words": recognised - len(words),
         "models": {"separation": MODEL_NAME, "pitch": f"torchcrepe-{PITCH_MODEL}", "asr": f"openai-whisper-{asr_model_name()}"},
     }
     return TrackResult(files=files, output=output)

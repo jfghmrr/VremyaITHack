@@ -1,13 +1,16 @@
 <script lang="ts">
+  import { artDims } from "./art";
   // Предметы комнаты для главной: настольная лампа, магнитофон, кружка, стопка дисков.
   // Вырезки предоставленного набора; для остальных предметов сохранён векторный вариант.
+  // Стопка кейсов рисуется кодом: прежняя вырезка с подписями реальных групп удалена из набора.
+  // Пластинки тоже рисуются кодом: на вырезке music/vinyl-photo-stack-s03 был чужой товарный знак (удалена).
   let { kind, width = 160, text = "" }: { kind: "lamp" | "boombox" | "mug" | "cds" | "micstand" | "headphones" | "vinyls" | "shelf" | "poster" | "notes" | "cases"; width?: number | string; text?: string } = $props();
   const words = $derived(text.split(" "));
-  const photos: Partial<Record<typeof kind, string>> = { boombox: "devices/boombox-s02", headphones: "music/headphones-s01", vinyls: "music/vinyl-photo-stack-s03", cds: "music/compact-disc-s01", cases: "music/cassette-stack-s01", notes: "doodles/note-pair-s01" };
+  const photos: Partial<Record<typeof kind, string>> = { boombox: "devices/boombox-s02", headphones: "music/headphones-s01", cds: "music/compact-disc-s01", notes: "doodles/note-pair-s01" };
 </script>
 
 {#if photos[kind]}
-  <img class="asset" src="/art/{photos[kind]}.webp?v=restored-1" alt="" style:width={typeof width === "number" ? `${width}px` : width} />
+  <img class="asset" src="/art/{photos[kind]}.webp?v=web-1" alt="" {...artDims(photos[kind] ?? "")} loading="lazy" style:width={typeof width === "number" ? `${width}px` : width} />
 {:else if kind === "lamp"}
   <svg class="decor" viewBox="0 0 200 220" {width} aria-hidden="true">
     <defs>
@@ -92,8 +95,9 @@
 {:else if kind === "cases"}
   <svg class="decor" viewBox="0 0 190 170" {width} aria-hidden="true">
     {#each Array.from({ length: 8 }, (_, i) => i) as i (i)}
-      <rect x={8 + (i % 3) * 3} y={150 - i * 19} width="172" height="17" rx="2" fill={["#2e3e52", "#7a1c1c", "#1d1c1d", "#b9b8b2", "#3a1a1a", "#1d1c1d", "#34506e", "#8e8d88"][i]} stroke="#0c0b0c" stroke-width="1.5" />
-      <rect x={60 + (i % 3) * 3} y={154 - i * 19} width="70" height="9" fill="#e8dfc9" opacity="0.85" />
+      <rect x={8 + (i % 3) * 3} y={150 - i * 19} width="172" height="17" rx="2" fill={["#2e3e52", "#7a1c1c", "#1d1c1d", "#5f5e5a", "#3a1a1a", "#1d1c1d", "#34506e", "#4a4846"][i]} stroke="#0c0b0c" stroke-width="1.5" />
+      <!-- Пустая бумажная подпись: без названий групп. -->
+      <rect x={60 + (i % 3) * 3} y={154 - i * 19} width="70" height="9" fill="#d9cbb0" opacity="0.62" />
     {/each}
   </svg>
 {:else}

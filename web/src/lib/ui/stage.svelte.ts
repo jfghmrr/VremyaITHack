@@ -1,2 +1,8 @@
 // Режим сцены: тёмный фон во время пения и скрытая навигация в фокусе.
-export const stage = $state({ dark: false, focus: false });
+// live — идёт исполнение без фокуса (тренировка фрагмента): на телефоне нижнее меню скрыто,
+// чтобы не отнимать высоту и не ловить случайные касания (шапка остаётся).
+export const stage = $state({ dark: false, focus: false, live: false });
+
+/** Телефонная раскладка (портрет телефона и узкий планшет до 800 px): шапка с логотипом и
+ *  нижнее меню. Запрос совпадает с CSS шапки и нижнего меню в routes/+layout.svelte. */
+export const PHONE_QUERY = "(max-width: 599px), (max-width: 799px) and (min-height: 521px)";

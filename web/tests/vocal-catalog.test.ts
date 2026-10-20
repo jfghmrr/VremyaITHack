@@ -45,7 +45,7 @@ describe("опубликованный каталог с настоящим во
     for (const language of ["ru", "en"])
       expect(catalog.filter((song) => song.language === language).length).toBeGreaterThanOrEqual(10);
     expect(catalog.every((song) => song.hasVocals === true)).toBe(true);
-    expect(catalogSections).toEqual(["Все", "Русские", "English"]);
+    expect(catalogSections).toEqual(["Все", "Русские", "Английские"]);
   });
 
   it("страница /legal/music указывает каждую песню каталога с атрибуцией и изменениями", () => {
@@ -165,12 +165,12 @@ describe("поиск и языковые фильтры", () => {
   it("даже раздел «Все» не показывает инструментальный трек", () => {
     expect(filterCatalog(examples, "Все", "").map((song) => song.id)).toEqual(["ru-one", "en-one"]);
     expect(filterCatalog(examples, "Русские", "").map((song) => song.id)).toEqual(["ru-one"]);
-    expect(filterCatalog(examples, "English", "").map((song) => song.id)).toEqual(["en-one"]);
+    expect(filterCatalog(examples, "Английские", "").map((song) => song.id)).toEqual(["en-one"]);
   });
   it("ищет название без различия ё/е и регистра, а также автора", () => {
     expect(filterCatalog(examples, "Все", "  ЗЕМЛЕЮ  ").map((song) => song.id)).toEqual(["ru-one"]);
     expect(filterCatalog(examples, "Все", "woodward").map((song) => song.id)).toEqual(["en-one"]);
-    expect(filterCatalog(examples, "English", "follow").map((song) => song.id)).toEqual(["en-one"]);
+    expect(filterCatalog(examples, "Английские", "follow").map((song) => song.id)).toEqual(["en-one"]);
   });
   it("не смешивает языковой фильтр с результатами поиска и возвращает пустой список", () => {
     expect(filterCatalog(examples, "Русские", "woodward")).toEqual([]);

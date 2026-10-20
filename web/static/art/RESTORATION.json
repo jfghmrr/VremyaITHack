@@ -34,7 +34,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/03-microphone-check.webp",
@@ -51,7 +56,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/04-performance.webp",
@@ -68,7 +78,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/05-result.webp",
@@ -85,7 +100,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/06-duel.webp",
@@ -102,7 +122,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/07-leaderboard.webp",
@@ -119,7 +144,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "backgrounds/08-progress.webp",
@@ -153,7 +183,12 @@
       "output_size": [
         2560,
         1440
-      ]
+      ],
+      "web_size": [
+        2560,
+        1440
+      ],
+      "web_quality": 75
     },
     {
       "file": "branding/logo-main-s01.webp",
@@ -170,7 +205,12 @@
       "output_size": [
         1924,
         504
-      ]
+      ],
+      "web_size": [
+        1600,
+        419
+      ],
+      "web_quality": 82
     },
     {
       "file": "cassettes/cassette-black-s01.webp",
@@ -187,7 +227,12 @@
       "output_size": [
         932,
         580
-      ]
+      ],
+      "web_size": [
+        340,
+        212
+      ],
+      "web_quality": 82
     },
     {
       "file": "cassettes/cassette-blue-s03.webp",
@@ -204,7 +249,12 @@
       "output_size": [
         936,
         540
-      ]
+      ],
+      "web_size": [
+        340,
+        196
+      ],
+      "web_quality": 82
     },
     {
       "file": "cassettes/cassette-clear-s01.webp",
@@ -221,7 +271,12 @@
       "output_size": [
         924,
         580
-      ]
+      ],
+      "web_size": [
+        340,
+        213
+      ],
+      "web_quality": 82
     },
     {
       "file": "cassettes/cassette-red-s01.webp",
@@ -238,7 +293,12 @@
       "output_size": [
         912,
         564
-      ]
+      ],
+      "web_size": [
+        340,
+        210
+      ],
+      "web_quality": 82
     },
     {
       "file": "devices/boombox-s02.webp",
@@ -255,7 +315,12 @@
       "output_size": [
         520,
         368
-      ]
+      ],
+      "web_size": [
+        520,
+        368
+      ],
+      "web_quality": 82
     },
     {
       "file": "doodles/note-pair-s01.webp",
@@ -289,7 +354,12 @@
       "output_size": [
         308,
         436
-      ]
+      ],
+      "web_size": [
+        140,
+        198
+      ],
+      "web_quality": 82
     },
     {
       "file": "hardware/paperclip-s02.webp",
@@ -306,7 +376,12 @@
       "output_size": [
         164,
         372
-      ]
+      ],
+      "web_size": [
+        110,
+        250
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-dance-s03.webp",
@@ -340,7 +415,12 @@
       "output_size": [
         888,
         568
-      ]
+      ],
+      "web_size": [
+        888,
+        568
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-encouragement-s03.webp",
@@ -357,7 +437,12 @@
       "output_size": [
         556,
         636
-      ]
+      ],
+      "web_size": [
+        556,
+        636
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-guitar-s03.webp",
@@ -374,7 +459,12 @@
       "output_size": [
         732,
         752
-      ]
+      ],
+      "web_size": [
+        600,
+        616
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-laptop-s03.webp",
@@ -391,7 +481,12 @@
       "output_size": [
         840,
         532
-      ]
+      ],
+      "web_size": [
+        840,
+        532
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-listen-s01.webp",
@@ -408,7 +503,12 @@
       "output_size": [
         528,
         604
-      ]
+      ],
+      "web_size": [
+        528,
+        604
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-paw-up-s01.webp",
@@ -425,7 +525,12 @@
       "output_size": [
         584,
         548
-      ]
+      ],
+      "web_size": [
+        584,
+        548
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-sing-s01.webp",
@@ -442,7 +547,12 @@
       "output_size": [
         732,
         812
-      ]
+      ],
+      "web_size": [
+        600,
+        666
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-sing-s02.webp",
@@ -459,7 +569,12 @@
       "output_size": [
         908,
         828
-      ]
+      ],
+      "web_size": [
+        800,
+        730
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-sing-sitting-s03.webp",
@@ -493,7 +608,12 @@
       "output_size": [
         1108,
         500
-      ]
+      ],
+      "web_size": [
+        800,
+        361
+      ],
+      "web_quality": 82
     },
     {
       "file": "mascots/cat-sleep-s02.webp",
@@ -510,7 +630,12 @@
       "output_size": [
         996,
         620
-      ]
+      ],
+      "web_size": [
+        800,
+        498
+      ],
+      "web_quality": 82
     },
     {
       "file": "music/cassette-stack-s01.webp",
@@ -527,7 +652,12 @@
       "output_size": [
         916,
         652
-      ]
+      ],
+      "web_size": [
+        700,
+        498
+      ],
+      "web_quality": 82
     },
     {
       "file": "music/compact-disc-s01.webp",
@@ -595,7 +725,12 @@
       "output_size": [
         1816,
         1008
-      ]
+      ],
+      "web_size": [
+        1000,
+        555
+      ],
+      "web_quality": 82
     },
     {
       "file": "paper/notebook-ruled-s03.webp",
@@ -697,7 +832,12 @@
       "output_size": [
         424,
         420
-      ]
+      ],
+      "web_size": [
+        200,
+        198
+      ],
+      "web_quality": 82
     },
     {
       "file": "stickers/star-cream-outline-s01.webp",
@@ -714,7 +854,12 @@
       "output_size": [
         292,
         364
-      ]
+      ],
+      "web_size": [
+        200,
+        249
+      ],
+      "web_quality": 82
     },
     {
       "file": "stickers/star-red-distressed-s02.webp",
@@ -731,7 +876,12 @@
       "output_size": [
         500,
         492
-      ]
+      ],
+      "web_size": [
+        200,
+        197
+      ],
+      "web_quality": 82
     },
     {
       "file": "stickers/star-spiral-s01.webp",
@@ -748,7 +898,13 @@
       "output_size": [
         552,
         548
-      ]
+      ],
+      "web_size": [
+        200,
+        199
+      ],
+      "web_quality": 82
     }
-  ]
+  ],
+  "web_encode": "2026-10-17: files with web_size were re-encoded for the site by tools/art/web_encode.sh (resized to the largest measured display size, WebP at web_quality, alpha quality 90); output_size stays the Real-ESRGAN output."
 }

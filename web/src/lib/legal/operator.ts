@@ -4,8 +4,8 @@ export const operator = { name: "Команда mugsize" };
 
 export const documents = {
   /** Редакции документов. Версия согласия должна совпадать с CONSENT_VERSION на сервере. */
-  privacy: "17 октября 2026",
-  consent: "2026-10-17",
+  privacy: "18 октября 2026",
+  consent: "2026-10-18",
   cookies: "17 октября 2026",
   terms: "17 октября 2026",
   contacts: "17 октября 2026",

@@ -9,9 +9,15 @@ export interface MicOptions {
   /** Ошибка в полутонах на отрезках [from, to) индексов 10-мс сетки. */
   errors?: [number, number, number][];
   silent?: boolean;
+  /** «Мычание» одной нотой (MIDI) всю песню без пауз вместо мелодии: античит постоянного тона. */
+  hum?: number;
+  /** Амплитуда ровного тона до начала песни (проверка микрофона); по умолчанию 0.18. */
+  level?: number;
   delay?: number;
   /** Рейтинговый матч выбирает песню на сервере: следуем реально загруженному эталону. */
   followLoadedSong?: boolean;
+  /** Сколько раз «певец» начал петь под запущенную минусовку (пишет генератор; читается как window.__mic.starts). */
+  starts?: number;
 }
 
 export async function fakeMic(context: BrowserContext, song: string, options: MicOptions = {}) {
@@ -60,7 +66,7 @@ export async function fakeMic(context: BrowserContext, song: string, options: Mi
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.frequency.value = 220;
-        gain.gain.value = opts.silent ? 0 : 0.18;
+        gain.gain.value = opts.silent ? 0 : (opts.level ?? 0.18);
         osc.connect(gain).connect(dest);
         osc.start();
         input = { ctx, osc, gain, scheduled: false };
@@ -68,11 +74,21 @@ export async function fakeMic(context: BrowserContext, song: string, options: Mi
       };
       const start = AudioBufferSourceNode.prototype.start;
       AudioBufferSourceNode.prototype.start = function (this: AudioBufferSourceNode, when = 0, offset?: number, ...rest: number[]) {
-        if (input && !input.scheduled && this.buffer && Math.abs(this.buffer.duration - duration) < 0.3 && !offset) {
+        // Каждый запуск песни с начала (в том числе «Начать заново» на сцене) — певец поёт заново.
+        if (input && this.buffer && Math.abs(this.buffer.duration - duration) < 0.3 && !offset) {
           const f = input;
           f.scheduled = true;
+          opts.starts = (opts.starts ?? 0) + 1;
           const base = f.ctx.currentTime + (when - this.context.currentTime) + (opts.delay ?? 0);
+          f.gain.gain.cancelScheduledValues(0);
+          f.osc.frequency.cancelScheduledValues(0);
           f.gain.gain.setValueAtTime(0, f.ctx.currentTime);
+          if (opts.hum !== undefined) {
+            f.gain.gain.setValueAtTime(0.22, base);
+            f.osc.frequency.setValueAtTime(440 * 2 ** ((opts.hum - 69) / 12), base);
+            f.gain.gain.setValueAtTime(0, base + duration);
+            return start.call(this, when, offset as number, ...rest);
+          }
           f0.forEach((m: number | null, i: number) => {
             const t = base + i * 0.01;
             f.gain.gain.setValueAtTime(m === null || opts.silent ? 0 : 0.22, t);

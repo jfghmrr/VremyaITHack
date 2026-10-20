@@ -8,3 +8,10 @@ for f in Caveat IBMPlexMono-Medium Oswald PTSerif-Bold RubikMonoOne; do
   pyftsubset "$f.ttf" --unicodes="$U" --layout-features='*' --flavor=woff2 --output-file="$f.woff2"
   rm "$f.ttf"
 done
+# Golos Text (ofl/golostext/GolosText[wght].ttf, сохранённый как GolosText.ttf) — основной шрифт
+# интерфейса: шире набор (латиница до U+017F, кириллица с украинскими и белорусскими буквами,
+# пунктуация, стрелки, геометрические знаки), ось wght 400–900 и все записи name сохраняются.
+# Знаки сайта, каталога и ответов API проверяет web/tests/e2e/font.spec.ts.
+G="U+0000-017F,U+0400-045F,U+0490-0491,U+2010-203A,U+20AC,U+20BD,U+2116,U+2122,U+2190-2199,U+2212,U+2264-2265,U+25A0-25FF,U+2661,U+266A,U+2713,U+FEFF,U+FFFD"
+pyftsubset GolosText.ttf --unicodes="$G" --layout-features='*' --name-IDs='*' --flavor=woff2 --output-file=GolosText.woff2
+rm GolosText.ttf

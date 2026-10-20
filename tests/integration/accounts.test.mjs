@@ -115,7 +115,7 @@ describe("152-ФЗ: согласие, выгрузка, удаление", () =>
     const reg = await post("register", { ...input, email });
     const c = cookieOf(reg);
     const id = (await reg.json()).profile.id;
-    assert.match(sql(`SELECT consent_version || ' ' || (consent_at IS NOT NULL) FROM users WHERE id = '${id}'`), /^2026-10-17 (t|true)$/);
+    assert.match(sql(`SELECT consent_version || ' ' || (consent_at IS NOT NULL) FROM users WHERE id = '${id}'`), /^2026-10-18 (t|true)$/);
     await post("attempts", { id: "22345678-1234-1234-1234-123456789012", songId: "ode", title: "Ода", score: 80, shift: 1,
       axes: { intervals: 1, rhythm: 1, stability: 1, coverage: 1 }, moments: [], owner: id }, c);
     const exp = await get("me/export", c);
@@ -124,7 +124,7 @@ describe("152-ФЗ: согласие, выгрузка, удаление", () =>
     const data = await exp.json();
     assert.equal(data.profile.email, email);
     assert.equal(data.attempts.length, 1);
-    assert.equal(data.consent.version, "2026-10-17");
+    assert.equal(data.consent.version, "2026-10-18");
     assert.equal((await get("me/export")).status, 401);
     assert.equal((await post("me/delete", { password: "Wrong-password-123" }, c)).status, 401);
     const del = await post("me/delete", { password: input.password }, c);

@@ -85,4 +85,9 @@
   .changes { font-size: var(--t-s); color: var(--ink-2); }
   .credit-links { display: flex; flex-wrap: wrap; gap: 8px 20px; font-size: var(--t-s); }
   .credit-links a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  /* Сенсорный экран: ссылки сведений — цели нажатия не ниже 44 px (QA L5). */
+  @media (pointer: coarse) {
+    .credit-links { gap: 0 20px; }
+    .credit-links a { display: inline-flex; align-items: center; min-height: var(--tap); }
+  }
 </style>

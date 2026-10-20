@@ -83,7 +83,7 @@ test("кабинет: оба разворота, имя и смена парол
   const a = await player(browser, "Тетрадь", "cn-earth", {});
   await a.page.goto("/progress");
   await shoot(a.page, "progress-final", [[1366,768],[1920,1080],[800,768]]);
-  await a.page.getByRole("link", {name:"Настройки аккаунта ↗"}).click();
+  await a.page.getByRole("link", {name:"Настройки аккаунта →"}).click();
   await a.page.getByLabel("Имя в игре (видно другим игрокам)").fill("Музыкальный кот");
   await a.page.getByRole("button", { name: "Сохранить имя" }).click();
   await expect(a.page.getByRole("heading", { name: "Музыкальный кот" })).toBeVisible();
@@ -133,6 +133,22 @@ test("главная: магнитофон и кнопки не перекрыв
   for (const [width,height] of [[1366,768],[1920,1080],[800,768],[390,844]]) {
     await page.setViewportSize({width,height});
     await page.waitForTimeout(250);
+    if (width < 600) {
+      // Телефон (с 18.10.2026, макет владельца): комната с магнитофоном и шкафчиками скрыта; записка,
+      // «Начать петь» и карточки разделов идут столбиком и не перекрываются.
+      const go=(await page.locator(".phone-home .hero-go").boundingBox())!;
+      const lead=(await page.locator(".phone-home .hero-lead").boundingBox())!;
+      const cards=await Promise.all((await page.locator(".phone-home .home-card").all()).map(async (c)=>(await c.boundingBox())!));
+      expect(cards).toHaveLength(2);
+      expect(go.y).toBeGreaterThanOrEqual(lead.y+lead.height);
+      expect(cards[0].y).toBeGreaterThanOrEqual(go.y+go.height);
+      expect(cards[1].y).toBeGreaterThanOrEqual(cards[0].y+cards[0].height);
+      expect(await page.locator(".boombox").isVisible()).toBe(false);
+      const phoneBox=await page.evaluate(()=>document.documentElement.scrollWidth);
+      expect(phoneBox).toBeLessThanOrEqual(width);
+      await page.screenshot({path:`../docs/screens/home-controls-${width}.png`,fullPage:true});
+      continue;
+    }
     const deck=await page.locator(".boombox").boundingBox();
     const preview=await page.getByRole("button",{name:"Включить магнитофон",exact:true}).boundingBox();
     const start=await page.getByRole("link",{name:"Начать петь",exact:false}).boundingBox();

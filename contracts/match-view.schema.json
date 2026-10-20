@@ -29,6 +29,11 @@
       "type": "string",
       "format": "uuid"
     },
+    "mode": {
+      "description": "Режим: «Кто лучше» или «Вместе». Прежние клиенты поле не знают и видят обычную дуэль.",
+      "$ref": "#/$defs/MatchMode",
+      "default": "versus"
+    },
     "players": {
       "type": "array",
       "items": {
@@ -64,6 +69,13 @@
     },
     "state": {
       "$ref": "#/$defs/MatchState"
+    },
+    "turns": {
+      "description": "Расписание ходов «Вместе»; у «Кто лучше» пусто и не передаётся.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Turn"
+      }
     }
   },
   "required": [
@@ -102,10 +114,40 @@
         "coverage"
       ]
     },
+    "HardMoment": {
+      "type": "object",
+      "properties": {
+        "end_s": {
+          "type": "number",
+          "format": "double"
+        },
+        "reason": {
+          "$ref": "#/$defs/Reason"
+        },
+        "start_s": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "start_s",
+        "end_s",
+        "reason"
+      ]
+    },
+    "MatchMode": {
+      "description": "Режим матча. «Кто лучше» (`versus`) — дуэль: оба поют всю песню, побеждает точность.\n«Вместе» (`coop`) — только комната друга: поют по очереди, по строке, общий балл без победителя.",
+      "type": "string",
+      "enum": [
+        "versus",
+        "coop"
+      ]
+    },
     "MatchResult": {
       "type": "object",
       "properties": {
         "players": {
+          "description": "Для «Вместе» `score` и `axes` каждого — оценка его партии (только его ходы),\nисход у обоих `draw`: победителя нет.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/PlayerResult"
@@ -113,6 +155,17 @@
         },
         "rated": {
           "type": "boolean"
+        },
+        "team": {
+          "description": "Только «Вместе»: общий балл и партии.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TeamResult"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "technical": {
           "type": "boolean"
@@ -144,6 +197,55 @@
         "win",
         "draw",
         "loss"
+      ]
+    },
+    "PartResult": {
+      "type": "object",
+      "properties": {
+        "hardest": {
+          "description": "Самое трудное место партии (окно разбора ядра).",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/HardMoment"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "score": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "seconds": {
+          "description": "Длительность мелодии эталона в ходах участника, с: вес партии в общем балле.",
+          "type": "number",
+          "format": "double"
+        },
+        "slot": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "turns": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "user_id": {
+          "type": "string",
+          "format": "uuid"
+        }
+      },
+      "required": [
+        "user_id",
+        "slot",
+        "turns",
+        "seconds"
       ]
     },
     "PlayerResult": {
@@ -234,6 +336,11 @@
         "ready": {
           "type": "boolean"
         },
+        "share_voice": {
+          "description": "«Вместе»: участник согласился поделиться голосом с партнёром.",
+          "type": "boolean",
+          "default": false
+        },
         "slot": {
           "type": "integer",
           "format": "uint8",
@@ -262,6 +369,14 @@
         "points"
       ]
     },
+    "Reason": {
+      "type": "string",
+      "enum": [
+        "pitch",
+        "rhythm",
+        "missing"
+      ]
+    },
     "SongRef": {
       "type": "object",
       "properties": {
@@ -284,6 +399,63 @@
         "title",
         "version",
         "duration_s"
+      ]
+    },
+    "TeamResult": {
+      "description": "Итог «Вместе»: общий балл — среднее партий, взвешенное по длительности спетой мелодии.",
+      "type": "object",
+      "properties": {
+        "parts": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PartResult"
+          }
+        },
+        "score": {
+          "description": "null, если хотя бы одна партия не оценена (неполная кривая).",
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        }
+      },
+      "required": [
+        "parts"
+      ]
+    },
+    "Turn": {
+      "description": "Ход режима «Вместе»: участник `slot` поёт с `start_s` до `end_s` (секунды от начала песни,\nокно строки с небольшим запасом) строки текста `lines` (номера в `lyrics` эталона).\nРасписание строит сервер (`coop::schedule`); клиенты его не пересчитывают.",
+      "type": "object",
+      "properties": {
+        "end_s": {
+          "type": "number",
+          "format": "double"
+        },
+        "lines": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "format": "uint32",
+            "minimum": 0
+          }
+        },
+        "slot": {
+          "type": "integer",
+          "format": "uint8",
+          "maximum": 255,
+          "minimum": 0
+        },
+        "start_s": {
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "slot",
+        "start_s",
+        "end_s",
+        "lines"
       ]
     }
   }

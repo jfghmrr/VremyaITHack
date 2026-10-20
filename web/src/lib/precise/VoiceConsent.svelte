@@ -58,4 +58,30 @@
       padding: var(--s-2) var(--s-3);
     }
   }
+  /* Телефон (макет владельца): текст и ссылка без изменений (редакция согласия — документы
+     сайта); основная кнопка во всю ширину, «Без точной оценки» — кнопка с рамкой. */
+  @media (max-width: 599px), (max-width: 799px) and (min-height: 521px) {
+    .voice-consent {
+      gap: var(--s-2);
+      padding: var(--s-3) var(--s-4);
+    }
+    h2 {
+      font-size: 1.45rem;
+    }
+    .actions {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    .actions .btn {
+      min-height: 50px;
+      font-family: var(--font);
+      font-size: var(--t-m);
+      font-weight: 700;
+    }
+    .btn-quiet {
+      border: 2px solid var(--ink);
+      border-radius: 3px;
+      text-decoration: none;
+    }
+  }
 </style>

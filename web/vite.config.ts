@@ -38,4 +38,7 @@ export default defineConfig({
   // источника, иначе его заблокирует CSP.
   build: { assetsInlineLimit: 0 },
   test: { include: ["tests/*.test.ts"] },
+  // Окружение Vitest с клиентской сборкой Svelte (`// @vitest-environment svelte-client`):
+  // в нём выполняются $effect, и тесты проверяют реактивные подписки.
+  resolve: { alias: { "vitest-environment-svelte-client": new URL("tests/svelte-client-env.ts", import.meta.url).pathname } },
 });

@@ -107,6 +107,45 @@ function perfectOutput(songId, params, bleed = { instrumental: 0.1, guide: 0.05 
   };
 }
 
+const putJson = (path, body, cookie, headers = browser(cookie ? { cookie } : {})) =>
+  fetch(`${api.base}/api/${path}`, { method: "PUT", headers, body: JSON.stringify(body) });
+
+/** Готовый свой трек: «обработчик» отдаёт файлы с мелодией cn-earth и своими словами. */
+async function readyTrack(cookie, title = "Правка текста") {
+  const { id } = await (await post("tracks", { title, language: "ru" }, cookie)).json();
+  assert.equal((await putBytes(`tracks/${id}/audio`, wav(16), "audio/wav", cookie)).status, 202);
+  const job = await lease(["track"]);
+  assert.equal(job.params.track_id, id);
+  const base = songs["cn-earth"];
+  const reference = {
+    ...base,
+    id: `my-${id}`,
+    title,
+    lyrics: [{ t: 1, text: "раз два" }, { t: 3, text: "три" }],
+    phrases: [{ start_s: 1, end_s: 2 }, { start_s: 3, end_s: 3.5 }],
+  };
+  const words = {
+    v: 1,
+    lines: [
+      { line: 0, words: [{ text: "раз", start_s: 1, end_s: 1.5 }, { text: "два", start_s: 1.5, end_s: 2 }] },
+      { line: 1, words: [{ text: "три", start_s: 3, end_s: 3.5 }] },
+    ],
+  };
+  const backing = readFileSync(`${ROOT}web/static/songs/cn-earth/backing.mp3`);
+  const files = {
+    "reference.json": Buffer.from(JSON.stringify(reference)),
+    "lyrics.words.json": Buffer.from(JSON.stringify(words)),
+    "backing.mp3": backing,
+    "instrumental.mp3": backing.subarray(0, 50_000),
+    "guide.mp3": backing.subarray(50_000, 90_000),
+  };
+  for (const [name, bytes] of Object.entries(files)) {
+    assert.equal((await worker(`jobs/${job.id}/files/${name}`, { method: "PUT", body: bytes, type: "application/octet-stream" })).status, 204, name);
+  }
+  assert.equal((await worker(`jobs/${job.id}/complete`, { method: "POST", body: { duration_s: base.duration_s } })).status, 204);
+  return { id, reference, words };
+}
+
 before(async () => {
   resetStores();
   await api.start();
@@ -378,6 +417,75 @@ describe("очередь GPU-обработчика", { concurrency: false }, ()
     assert.equal((await del(`tracks/${id}`, a)).status, 204);
     assert.deepEqual((await (await get("tracks", a)).json()).tracks, []);
     assert.equal((await get(`tracks/${id}/files/reference.json`, a)).status, 404);
+  });
+
+  it("owner edits own-track lyrics: 200 rewrites reference and words, other user 404, invalid 400", async () => {
+    const a = await register("Редактор");
+    const b = await register("Чужой");
+    const { id, reference, words } = await readyTrack(a);
+    const edit = {
+      lines: [
+        { words: [{ text: "Раз,", start_s: 1.2, end_s: 1.6 }, { text: "два", start_s: 1.6, end_s: 2.1 }] },
+        { words: [{ text: "бля", start_s: 2.5, end_s: 2.9 }] },
+        { words: [{ text: "новая", start_s: 5.0, end_s: 5.6 }, { text: "строка", start_s: 5.6, end_s: 6.3 }] },
+      ],
+    };
+    const path = `tracks/${id}/lyrics`;
+    assert.equal((await putJson(path, edit)).status, 401, "гость");
+    assert.equal((await putJson(path, edit, b)).status, 404, "чужой трек");
+    assert.equal((await putJson("tracks/00000000-0000-4000-8000-000000000000/lyrics", edit, a)).status, 404, "нет трека");
+    const { "x-perepev-request": _, ...unmarked } = browser({ cookie: a });
+    assert.equal((await putJson(path, edit, a, { ...browser({ cookie: a }), origin: "https://evil.example" })).status, 403, "чужой сайт");
+    assert.equal((await putJson(path, edit, a, unmarked)).status, 403, "без отметки запроса");
+    const tooMany = Array.from({ length: 81 }, (_, i) => ({ words: [{ text: "ла", start_s: i * 0.1, end_s: i * 0.1 + 0.05 }] }));
+    for (const invalid of [
+      { lines: [{ words: [{ text: "раз", start_s: 2, end_s: 1 }] }] },
+      { lines: [{ words: [{ text: "раз", start_s: 1, end_s: 2 }] }, { words: [{ text: "два", start_s: 1.5, end_s: 2.5 }] }] },
+      { lines: [{ words: [{ text: "раз", start_s: 1, end_s: reference.duration_s + 1 }] }] },
+      { lines: [{ words: [] }] },
+      { lines: [{ words: [{ text: "два слова", start_s: 1, end_s: 2 }] }] },
+      { lines: [{ words: [{ text: "…", start_s: 1, end_s: 2 }] }] },
+      { lines: [{ words: [{ text: "а".repeat(41), start_s: 1, end_s: 2 }] }] },
+      { lines: tooMany },
+      { lines: [{ words: [{ text: "раз", start_s: "1", end_s: 2 }] }] },
+      { lyrics: [] },
+    ]) {
+      assert.equal((await putJson(path, invalid, a)).status, 400, JSON.stringify(invalid).slice(0, 80));
+    }
+    assert.deepEqual(await (await get(`tracks/${id}/files/reference.json`, a)).json(), reference, "после отказов эталон не тронут");
+    assert.deepEqual(await (await get(`tracks/${id}/files/lyrics.words.json`, a)).json(), words, "после отказов слова не тронуты");
+
+    const r = await putJson(path, edit, a);
+    assert.equal(r.status, 200, await r.clone().text());
+    const saved = await r.json();
+    assert.equal(saved.masked, 1);
+    assert.equal(saved.lines[1].words[0].text, "б**", "мат маскируется на сервере");
+    const ref = await (await get(`tracks/${id}/files/reference.json`, a)).json();
+    assert.deepEqual(ref.f0_midi, reference.f0_midi, "мелодия не меняется");
+    assert.equal(ref.id, `my-${id}`);
+    assert.equal(ref.duration_s, reference.duration_s);
+    assert.equal(ref.hop_ms, 10);
+    assert.deepEqual(ref.lyrics, [{ t: 1.2, text: "Раз, два" }, { t: 2.5, text: "б**" }, { t: 5, text: "новая строка" }]);
+    assert.deepEqual(ref.phrases, [{ start_s: 1.2, end_s: 2.1 }, { start_s: 2.5, end_s: 2.9 }, { start_s: 5, end_s: 6.3 }]);
+    assert.deepEqual(await (await get(`tracks/${id}/files/lyrics.words.json`, a)).json(), { v: 1, lines: saved.lines });
+
+    // Точная оценка трека сверяет уже исправленные слова.
+    const perf = await sing(`my-${id}`, { cookie: a, mode: "speaker" });
+    const scoreJob = await lease(["score"]);
+    assert.equal(scoreJob.id, perf.id);
+    assert.deepEqual(scoreJob.params.words.map((w) => w.text), ["Раз,", "два", "б**", "новая", "строка"]);
+    assert.equal((await worker(`jobs/${perf.id}/fail`, { method: "POST", body: { error: "test" } })).status, 204);
+
+    // Предел 120 сохранений в час считает и неверные запросы: проверка до чтения файлов.
+    const c = await register("Спешащий");
+    const { id: busy } = await readyTrack(c, "Много правок");
+    for (let i = 0; i < 120; i++) assert.equal((await putJson(`tracks/${busy}/lyrics`, { lines: [{ words: [] }] }, c)).status, 400);
+    assert.equal((await putJson(`tracks/${busy}/lyrics`, edit, c)).status, 429, "121-я попытка в час");
+
+    // Трек без обработанного звука править нельзя.
+    const { id: raw } = await (await post("tracks", { title: "Без звука", language: "ru" }, a)).json();
+    assert.equal((await putJson(`tracks/${raw}/lyrics`, edit, a)).status, 409);
+    assert.equal((await del(`tracks/${raw}`, a)).status, 204);
   });
 
   it("data export lists own tracks and precise performances (metadata only)", async () => {

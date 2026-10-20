@@ -5,6 +5,7 @@ import { accepted, password } from "./helpers";
 import { shoot } from "./shoot";
 import type { CatalogEntry } from "../../src/lib/catalog";
 import { documents } from "../../src/lib/legal/operator";
+import { count, SECONDS } from "../../src/lib/ui/format";
 
 const catalog: CatalogEntry[] = JSON.parse(readFileSync(new URL("../../static/songs/index.json", import.meta.url), "utf8"));
 
@@ -93,7 +94,7 @@ test("каталог: разделы, новая песня, пение по н�
   expect(catalog.length).toBeGreaterThanOrEqual(20);
   await page.getByRole("button", { name: "Русские", exact: true }).click();
   await expect(songs).toHaveCount(catalog.filter((entry) => entry.language === "ru").length);
-  await page.getByRole("button", { name: "English", exact: true }).click();
+  await page.getByRole("button", { name: "Английские", exact: true }).click();
   await expect(songs).toHaveCount(catalog.filter((entry) => entry.language === "en").length);
   await expect(page.getByText(song.title, { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Русские", exact: true }).click();
@@ -101,7 +102,8 @@ test("каталог: разделы, новая песня, пение по н�
   await expect(songs).toHaveCount(1);
   await page.getByRole("button", { name: `Петь «${song.title}»` }).click();
   await expect(page.getByRole("heading", {name:song.title,exact:true})).toBeVisible();
-  await expect(page.getByText(`${Math.round(song.duration_s)} секунд`,{exact:true})).toBeVisible();
+  // Длительность со склонением: «21 секунда», «23 секунды», «30 секунд».
+  await expect(page.getByText(count(Math.round(song.duration_s), SECONDS), { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Включить микрофон" }).click();
   await page.getByRole("button", { name: "Начать пение" }).click();
   await expect(page).toHaveURL(/\/result$/, { timeout: 80_000 });

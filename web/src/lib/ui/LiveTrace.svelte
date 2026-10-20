@@ -1,6 +1,9 @@
 <script lang="ts">
   // Живая линия голоса при проверке микрофона: последние шесть секунд.
   import { css, paint } from "./canvas";
+  import { VOICE, voiceParts } from "./voice-line";
+
+  const LIVE = { ...VOICE, stepMax: 0.05, bridgeS: 0.1 };
 
   let { points }: { points: { at: number; midi: number | null }[] } = $props();
 
@@ -21,18 +24,16 @@
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.lineJoin = "round";
+    // Как на сцене (voice-line.ts): лёгкое сглаживание и мостики через короткие провалы. Время
+    // кадра здесь — момент его прихода из Worker, поэтому шаг между кадрами допускается шире.
     ctx.beginPath();
-    let last = 0;
-    for (const p of points) {
-      if (p.midi === null || now - p.at > 6) {
-        last = 0;
-        continue;
-      }
-      const x = w - 12 - ((now - p.at) / 6) * (w - 24);
-      const y = h / 2 - (p.midi - center) * (h / 16);
-      if (last && p.at - last < 0.15) ctx.lineTo(x, y);
-      else ctx.moveTo(x, y);
-      last = p.at;
+    for (const part of voiceParts(points.map((p) => ({ t: p.at, midi: p.midi })), now - 6, Infinity, LIVE)) {
+      part.forEach((p, k) => {
+        const x = w - 12 - ((now - p.t) / 6) * (w - 24);
+        const y = h / 2 - (p.m - center) * (h / 16);
+        if (k) ctx.lineTo(x, y);
+        else ctx.moveTo(x, y);
+      });
     }
     ctx.stroke();
   }

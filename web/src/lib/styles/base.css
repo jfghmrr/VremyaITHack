@@ -281,6 +281,50 @@ select {
     0 5px 8px rgb(0 0 0 / 0.5);
 }
 
+/* Переключатель (сегменты): бумажная полоска в рамке чернилами, выбранный сегмент залит
+   чернилами — как «В наушниках / Без наушников». Один вид для «Как пел / Ориентир»,
+   разделов кабинета, друзей и фильтров каталога. Кнопки внутри — aria-pressed. */
+.segmented {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  max-width: 100%;
+  border: 2px solid var(--ink);
+  border-radius: 3px;
+  background: var(--paper) var(--tex-paper);
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.45);
+}
+.segmented > button {
+  min-height: calc(var(--control-h) - 4px);
+  padding: 0 var(--s-4);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--t-s);
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.segmented > button + button {
+  border-left: 2px solid var(--ink);
+}
+.segmented > button:hover:not(:disabled, [aria-pressed="true"]) {
+  background: rgb(31 28 26 / 0.08);
+}
+.segmented > button[aria-pressed="true"] {
+  background: var(--ink);
+  color: var(--paper-2);
+}
+.segmented > button:disabled {
+  color: var(--ink-3);
+  cursor: not-allowed;
+}
+.segmented > button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+
 kbd {
   display: inline-block;
   min-width: 1.6em;
@@ -393,6 +437,7 @@ input[type="checkbox"] {
 @media (pointer: coarse), not all and (min-width: 1100px) and (min-height: 521px) {
   .btn,
   .key,
+  .segmented > button,
   .field input,
   .field select {
     min-height: var(--tap);
@@ -423,6 +468,22 @@ input[type="checkbox"] {
 }
 .deco {
   pointer-events: none;
+}
+/* Сцена «fit» держит пропорции мокапа на любом мониторе и при масштабе ОС или браузера.
+   Позиции заданы в процентах от высоты сцены, а размеры предметов — от её ширины, поэтому на
+   коротком широком окне (1920×1080 при 125–150 % или с панелями браузера) предметы налезали
+   друг на друга, а на высоком растягивались. Ширина не больше 2 высот (короткое окно: сцена
+   уже и по центру), высота не больше ширины / 1.6 (высокое окно: свободное место снизу).
+   На 1366×768 и обычных ноутбуках ничего не меняется. */
+@media (min-width: 1100px) and (min-height: 521px) {
+  .scene.fit {
+    --scene-h: calc(100svh - var(--chrome));
+    width: min(100%, calc(var(--scene-h) * 2));
+    height: auto;
+    aspect-ratio: 1.6;
+    max-height: var(--scene-h);
+    margin-inline: auto;
+  }
 }
 @media not all and (min-width: 1100px) and (min-height: 521px) {
   .scene {

@@ -198,6 +198,105 @@ describe("два экземпляра API", { concurrency: false }, () => {
     }
   });
 
+  it("реванш после рейтингового матча: нерейтинговая комната, приглашение сопернику, второй нажавший входит в ту же комнату", async () => {
+    const a = await player("Реванш-А", A);
+    const b = await player("Реванш-Б", B);
+    await a.send({ type: "queue_join" });
+    await b.send({ type: "queue_join" });
+    await a.waitFor(() => a.view?.state === "waiting", 15_000, "match found");
+    await b.waitFor(() => b.view?.match_id === a.view.match_id, 15_000, "same match");
+    const first = a.view.match_id;
+    assert.equal(a.view.kind, "rated");
+    // Матч завершён (отказ до подтверждения: никто не возвращается в очередь).
+    await a.send({ type: "decline", match_id: first });
+    await a.state("cancelled");
+    await b.state("cancelled");
+    const r = await a.send({ type: "rematch", match_id: first });
+    assert.equal(r.ok, true, r.error);
+    const own = a.events.findLast((e) => e.type === "room");
+    assert.equal(own.rematch_of, first);
+    assert.equal(own.invite, false);
+    await b.waitFor(() => b.events.some((e) => e.type === "room" && e.invite === true && e.rematch_of === first && e.match_id === own.match_id), 10_000, "приглашение");
+    await a.waitFor(() => a.view?.match_id === own.match_id, 10_000, "своя комната");
+    assert.equal(a.view.kind, "friend");
+    const invites = (p) => p.events.filter((e) => e.type === "room" && e.invite === true).length;
+    // Повтор команды первым нажавшим (клиент заново шлёт неподтверждённые команды после
+    // переподключения) не присылает сопернику второе приглашение.
+    assert.equal((await a.send({ type: "rematch", match_id: first })).ok, true);
+    // Второй нажал «Реванш», а не «Принять»: он входит в комнату первого, второй комнаты нет.
+    const r2 = await b.send({ type: "rematch", match_id: first });
+    assert.equal(r2.ok, true, r2.error);
+    assert.equal(b.events.findLast((e) => e.type === "room").match_id, own.match_id);
+    await a.waitFor(() => a.view?.match_id === own.match_id && a.view.state === "ready_check", 10_000, "готовность у первого");
+    await b.waitFor(() => b.view?.match_id === own.match_id && b.view.state === "ready_check", 10_000, "готовность у второго");
+    // Повтор команды тем же игроком (переподключение) не создаёт новую комнату.
+    assert.equal((await a.send({ type: "rematch", match_id: first })).ok, true);
+    assert.equal((await b.send({ type: "rematch", match_id: first })).ok, true);
+    await sleep(500);
+    assert.equal(invites(b), 1, "одно приглашение второму игроку");
+    assert.equal(invites(a), 0, "первому нажавшему приглашение не приходит");
+    // Новая комната с участием первого игрока после прошлого матча — ровно одна.
+    assert.equal(sql(`SELECT count(*) FROM matches m WHERE m.created_at > (SELECT created_at FROM matches WHERE id = '${first}') AND EXISTS (SELECT 1 FROM match_participants p WHERE p.match_id = m.id AND p.user_id = '${a.id}')`), "1");
+    for (const p of [a, b]) await p.send({ type: "leave", match_id: own.match_id });
+  });
+
+  it("реванш предлагается только в течение срока жизни комнаты (15 минут после матча)", async () => {
+    const a = await player("Поздно-А", A);
+    const b = await player("Поздно-Б", B);
+    const played = async () => {
+      await a.send({ type: "room_create", song_id: "cn-earth" });
+      const code = a.events.findLast((e) => e.type === "room").code;
+      await b.send({ type: "room_join", code });
+      await a.waitFor(() => a.view?.room_code === code && a.view.state === "ready_check", 10_000, "готовность");
+      const id = a.view.match_id;
+      await a.send({ type: "leave", match_id: id });
+      await b.waitFor(() => b.view?.match_id === id && b.view.state === "cancelled", 10_000, "отмена");
+      return id;
+    };
+    const old = await played();
+    sql(`UPDATE matches SET finished_at = now() - interval '16 minutes' WHERE id = '${old}'`);
+    const r = await a.send({ type: "rematch", match_id: old });
+    assert.equal(r.ok, false, "реванш давнего матча отклонён");
+    assert.match(r.error ?? "", /15 минут/);
+    assert.equal(sql(`SELECT count(*) FROM matches m WHERE m.created_at > (SELECT created_at FROM matches WHERE id = '${old}') AND EXISTS (SELECT 1 FROM match_participants p WHERE p.match_id = m.id AND p.user_id = '${a.id}')`), "0", "комната не создана");
+    await sleep(300);
+    assert.equal(b.events.filter((e) => e.type === "room" && e.invite === true).length, 0, "приглашения нет");
+    // Матч, закончившийся 14 минут назад, ещё можно переиграть.
+    const recent = await played();
+    sql(`UPDATE matches SET finished_at = now() - interval '14 minutes' WHERE id = '${recent}'`);
+    const ok = await a.send({ type: "rematch", match_id: recent });
+    assert.equal(ok.ok, true, ok.error);
+    const room = a.events.findLast((e) => e.type === "room");
+    assert.equal(room.rematch_of, recent);
+    await a.waitFor(() => a.view?.match_id === room.match_id, 10_000, "комната реванша");
+    await a.send({ type: "leave", match_id: room.match_id });
+  });
+
+  it("одновременный «Реванш» у обоих после дружеского матча — одна общая комната", async () => {
+    const a = await player("Одновременно-А", A);
+    const b = await player("Одновременно-Б", B);
+    await a.send({ type: "room_create", song_id: "cn-earth" });
+    const code = a.events.findLast((e) => e.type === "room").code;
+    await b.send({ type: "room_join", code });
+    await a.state("ready_check");
+    const first = a.view.match_id;
+    await a.send({ type: "leave", match_id: first });
+    await b.state("cancelled");
+    const [ra, rb] = await Promise.all([a.send({ type: "rematch", match_id: first }), b.send({ type: "rematch", match_id: first })]);
+    assert.equal(ra.ok, true, ra.error);
+    assert.equal(rb.ok, true, rb.error);
+    const roomA = a.events.findLast((e) => e.type === "room" && e.invite === false).match_id;
+    const roomB = b.events.findLast((e) => e.type === "room" && e.invite === false).match_id;
+    assert.equal(roomA, roomB, "оба в одной комнате");
+    await a.waitFor(() => a.view?.match_id === roomA && a.view.state === "ready_check", 10_000, "готовность");
+    await b.waitFor(() => b.view?.match_id === roomA && b.view.state === "ready_check", 10_000, "готовность");
+    // Посторонний не может предложить реванш чужого матча.
+    const c = await player("Посторонний", A);
+    const rc = await c.send({ type: "rematch", match_id: first });
+    assert.equal(rc.ok, false);
+    for (const p of [a, b]) await p.send({ type: "leave", match_id: roomA });
+  });
+
   it("выход из кабинета закрывает WebSocket на любом экземпляре", async () => {
     const p = await new Player("Лямбда").register(A);
     await p.connect(B);

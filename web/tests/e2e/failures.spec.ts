@@ -38,6 +38,27 @@ test("тишина: высокий балл не выдаётся", async ({ pag
   await shoot(page, "result-silence", [[1366, 768], [1920, 1080], [800, 768], [390, 844]]);
 });
 
+test("одна нота всю песню (мычание): балл не выше 30", async ({ page, context }) => {
+  await fakeMic(context, "cn-earth", { hum: 57 });
+  await page.goto("/sing/cn-earth");
+  await page.getByRole("button", { name: "Включить микрофон" }).click();
+  await page.getByRole("button", { name: "Начать пение" }).click();
+  await expect(page.getByLabel(/из 100/)).toBeVisible({ timeout: 40_000 });
+  const label = await page.getByLabel(/из 100/).getAttribute("aria-label");
+  expect(Number(label!.split(" ")[0])).toBeLessThanOrEqual(30);
+  await page.getByRole("button", { name: "Разбор и ошибки" }).click();
+  await expect(page.getByText("Почти одна нота всю попытку.")).toBeVisible();
+});
+
+test("тихий микрофон: голос слышен, сайт сообщает об усилении", async ({ page, context }) => {
+  // Тон с RMS около 0.0057: ниже прежнего порога детектора 0.008 и ниже «нормального» уровня.
+  await fakeMic(context, "cn-earth", { level: 0.008 });
+  await page.goto("/sing/cn-earth");
+  await page.getByRole("button", { name: "Включить микрофон" }).click();
+  await expect(page.getByText("Голос слышен. Можно начинать.")).toBeVisible();
+  await expect(page.getByText(/Уровень звука: тихий — для распознавания сайт усиливает его в \d,\d раза/)).toBeVisible();
+});
+
 test("недоступный трек и пустой разбор", async ({ page }) => {
   await page.goto("/sing/no-such-song");
   await expect(page.getByRole("alert")).toContainText("Эталон песни не найден");
@@ -58,8 +79,9 @@ test("нет соперника: честное предложение без б
   const a = await player(browser, "Одиночка", "cn-earth", {});
   await a.page.goto("/duels");
   await a.page.getByRole("button", { name: "Найти соперника" }).click();
-  await expect(a.page.getByText(/Пока никто не подходит/)).toBeVisible({ timeout: 40_000 });
-  await expect(a.page.getByText(/ботов вместо людей здесь нет/)).toBeVisible();
+  // Пояснение приходит от сервера («никто не ищет»); подсказка браузера — только без пояснения.
+  await expect(a.page.getByText(/никто не ищет соперника|Пока никто не подходит/).first()).toBeVisible({ timeout: 40_000 });
+  await expect(a.page.getByText(/ботов вместо людей здесь нет/)).toBeVisible({ timeout: 40_000 });
   await expect(a.page.getByText(/онлайн|игроков в сети/i)).toHaveCount(0);
   await a.page.getByRole("button", { name: "Отменить поиск" }).click();
   await a.context.close();
@@ -70,6 +92,11 @@ test("клавиатура: Tab-порядок, видимый фокус, Пр�
   await page.goto("/");
   // SvelteKit при запуске сбрасывает фокус в начало документа: ждём готовности страницы.
   await page.waitForLoadState("networkidle");
+  // Первая остановка — ссылка «К содержимому» (QA L27): в фокусе она видна.
+  await page.keyboard.press("Tab");
+  const skip = page.getByRole("link", { name: "К содержимому" });
+  await expect(skip).toBeFocused();
+  await expect(skip).toBeInViewport({ ratio: 1 });
   await page.keyboard.press("Tab");
   await expect(page.getByRole("link", { name: "Главная" })).toBeFocused();
   const outline = await page.evaluate(() => getComputedStyle(document.activeElement!).outlineStyle);
@@ -113,4 +140,29 @@ test("масштаб 200% и ширина 800 px: без горизонталь�
   await page.setViewportSize({ width: 683, height: 384 });
   await page.goto("/");
   await page.screenshot({ path: "../docs/screens/home-zoom200.png", fullPage: true });
+});
+
+// Ревью: на телефоне «Настройки звука» раскрыты сами, когда сохранённый микрофон не подключён.
+// Выбор рабочего входа не должен сворачивать их под рукой; свернуть может только сама кнопка.
+test.describe("телефон 390×844", () => {
+  test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
+
+  test("сохранённый микрофон отключён: настройки звука раскрыты и не сворачиваются после выбора", async ({ page, context }) => {
+    await fakeMic(context, "cn-earth");
+    await page.addInitScript(() => localStorage.setItem("perepev.inputDeviceId", "unplugged"));
+    await page.goto("/sing/cn-earth");
+    const toggle = page.getByRole("button", { name: "Настройки звука" });
+    const input = page.getByRole("combobox", { name: "Устройство ввода" });
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await expect(input).toContainText("Сохранённый микрофон не подключён");
+    await input.selectOption("");
+    await page.waitForTimeout(200);
+    await expect(input).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await toggle.click();
+    await expect(input).toBeHidden();
+    await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    await toggle.click();
+    await expect(input).toBeVisible();
+  });
 });

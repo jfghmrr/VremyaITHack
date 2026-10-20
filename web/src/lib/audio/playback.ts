@@ -1,9 +1,10 @@
 // Переслушивание попытки: A — запись как есть, B — ориентир в твоей тональности.
-// «synth» — синтезированный голос (не твой тембр); «voice» — твоя запись через
+// «synth» — синтезированный голос (не твой тембр, см. guide.ts); «voice» — твоя запись через
 // Tone.PitchShift (эксперимент: артефакты, не исправляет ритм и пропуски).
 import type { CorrectionPoint, ScoreResult } from "#lib/scoring/types.ts";
 import type { Recording } from "#lib/session.svelte.ts";
 import type { PlayMode } from "#lib/precise/uploader.ts";
+import { normalizeRecording } from "./level.ts";
 
 /** Голос исполнителя в наушниках звучит тихо (около −15 дБ), только как подсказка. */
 export const GUIDE_GAIN = 0.18;
@@ -69,6 +70,8 @@ export interface PlaybackOptions {
   duration: number;
   result: ScoreResult;
   curve: CorrectionPoint[];
+  /** Готовый звук синтезированного ориентира от начала песни (guide.ts `renderGuide`). */
+  guide?: { samples: Float32Array<ArrayBuffer>; rate: number };
   engine: IdealEngine;
   ideal: boolean;
   from?: number;
@@ -109,7 +112,8 @@ export class Playback {
       await resumed;
       const length = Math.max(0.02, to - from);
       const voice = ctx.createBuffer(1, o.recording.samples.length, o.recording.sampleRate);
-      voice.copyToChannel(new Float32Array(o.recording.samples), 0);
+      // Ровная громкость своего голоса: тихая запись поднимается (до ×8), пики мягко ограничены.
+      voice.copyToChannel(normalizeRecording(o.recording.samples, o.recording.sampleRate), 0);
       let tonePlayer: import("tone").Player | undefined;
       let effect: import("tone").PitchShift | undefined;
       if (o.engine === "voice") {
@@ -145,36 +149,16 @@ export class Playback {
         p.nodes.push(raw);
         tonePlayer?.start(at + delay, offset, voiceLength);
       }
-      if (o.engine === "synth") {
-        const osc = ctx.createOscillator();
-        osc.type = "sawtooth";
-        const env = ctx.createGain();
-        env.gain.value = 0;
-        osc.connect(env);
-        for (const [frequency, q, gain] of [
-          [700, 4, 0.3],
-          [1200, 5, 0.17],
-          [2500, 6, 0.07],
-        ]) {
-          const filter = ctx.createBiquadFilter();
-          filter.type = "bandpass";
-          filter.frequency.value = frequency;
-          filter.Q.value = q;
-          const level = ctx.createGain();
-          level.gain.value = gain;
-          env.connect(filter);
-          filter.connect(level).connect(p.wet);
-          p.nodes.push(filter, level);
-        }
-        for (const point of o.curve) {
-          if (point.t < from || point.t >= to) continue;
-          const when = at + point.t - from;
-          if (point.target !== null) osc.frequency.setTargetAtTime(440 * 2 ** ((point.target - 69) / 12), when, 0.008);
-          env.gain.setTargetAtTime(point.target === null ? 0 : 0.45, when, 0.008);
-        }
-        osc.start(at);
-        osc.stop(at + length);
-        p.nodes.push(osc, env);
+      if (o.engine === "synth" && o.guide && o.guide.samples.length) {
+        // Ориентир посчитан заранее: один буфер по тем же часам контекста, что и минус.
+        const buffer = ctx.createBuffer(1, o.guide.samples.length, o.guide.rate);
+        buffer.copyToChannel(o.guide.samples, 0);
+        const guide = ctx.createBufferSource();
+        guide.buffer = buffer;
+        guide.connect(p.wet);
+        const guideLength = Math.min(length, buffer.duration - from);
+        if (guideLength > 0) guide.start(at, from, guideLength);
+        p.nodes.push(guide);
       } else if (effect) {
         const fx = effect;
         // PitchShift.pitch — числовое свойство, не AudioParam: обновление по таймеру 20 мс.

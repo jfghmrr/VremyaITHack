@@ -172,6 +172,9 @@ pub struct GameConfig {
     pub collect_seconds: u64,
     pub curve_retention_days: i64,
     pub queue_ticket_seconds: u64,
+    /// Через сколько секунд ожидания (у обоих) пул калибровки и основной пул открываются
+    /// друг для друга. Окна близости и защита новичков действуют по-прежнему.
+    pub cross_pool_seconds: u64,
 }
 
 impl Default for GameConfig {
@@ -199,6 +202,7 @@ impl Default for GameConfig {
             collect_seconds: 20,
             curve_retention_days: 30,
             queue_ticket_seconds: 30,
+            cross_pool_seconds: 30,
         }
     }
 }

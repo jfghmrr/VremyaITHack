@@ -29,6 +29,8 @@ hex = "0.4.3"
 rand = "0.10.3"
 subtle = "2.6"
 thiserror = "2.0.21"
+# Маскирование мата в тексте своего трека (те же правила, что у GPU-обработчика).
+regex = "1.13.1"
 anyhow = "1.0.104"
 futures-util = "0.3.34"
 schemars = { version = "1.2.3", features = ["uuid1"] }

@@ -88,8 +88,13 @@
       ]
     },
     {
+      "description": "Комната для игры с другом. `mode` — «Кто лучше» (по умолчанию, как у прежних клиентов)\nили «Вместе»: по очереди по строке.",
       "type": "object",
       "properties": {
+        "mode": {
+          "$ref": "#/$defs/MatchMode",
+          "default": "versus"
+        },
         "song_id": {
           "type": "string"
         },
@@ -275,10 +280,42 @@
         "type",
         "match_id"
       ]
+    },
+    {
+      "description": "«Вместе»: согласие поделиться своим голосом (только свои ходы) с партнёром для общего\nпрослушивания. Меняется только до начала песни; по умолчанию выключено.",
+      "type": "object",
+      "properties": {
+        "match_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "on": {
+          "type": "boolean"
+        },
+        "type": {
+          "type": "string",
+          "const": "voice_share"
+        }
+      },
+      "required": [
+        "type",
+        "match_id",
+        "on"
+      ]
     }
   ],
   "required": [
     "v",
     "id"
-  ]
+  ],
+  "$defs": {
+    "MatchMode": {
+      "description": "Режим матча. «Кто лучше» (`versus`) — дуэль: оба поют всю песню, побеждает точность.\n«Вместе» (`coop`) — только комната друга: поют по очереди, по строке, общий балл без победителя.",
+      "type": "string",
+      "enum": [
+        "versus",
+        "coop"
+      ]
+    }
+  }
 }

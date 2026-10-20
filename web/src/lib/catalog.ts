@@ -49,6 +49,11 @@ export function loadSong(id: string): Promise<Song> {
   return p;
 }
 
+/** Забыть загруженный эталон: после правки текста своего трека экран пения читает файл заново. */
+export function forgetSong(id: string) {
+  songs.delete(id);
+}
+
 /** Версия эталона — первые 12 символов SHA-256 reference.json, как на сервере. */
 export async function songVersion(id: string): Promise<string> {
   const r = await fetch(asset(id, "reference.json"));
@@ -69,6 +74,8 @@ export type CatalogEntry = SongInfo & {
   age?: string;
   /** Есть instrumental.mp3 и guide.mp3 (отделённый голос), выровненные с backing.mp3. */
   stems?: boolean;
+  /** false — сервер не проверяет слова этой песни (распознавание их не слышит); без поля — проверяет. */
+  wordsCheck?: boolean;
 };
 
 /** Запись для экрана пения: песня каталога или свой трек (у него всегда есть дорожки и слова). */
@@ -77,7 +84,7 @@ export function entryFor(id: string, list: CatalogEntry[]): CatalogEntry | undef
   return { id, title: "", artist: "", duration_s: 0, hasVocals: true, stems: true, preview: "backing.mp3", wordTiming: "lyrics.words.json" };
 }
 
-export const catalogSections = ["Все", "Русские", "English"] as const;
+export const catalogSections = ["Все", "Русские", "Английские"] as const;
 export type CatalogSection = (typeof catalogSections)[number];
 
 export function filterCatalog(list: CatalogEntry[], section: CatalogSection, query: string): CatalogEntry[] {
@@ -86,7 +93,7 @@ export function filterCatalog(list: CatalogEntry[], section: CatalogSection, que
   return list.filter((song) => {
     const matchesSection = song.hasVocals === true && (section === "Все"
       || (section === "Русские" && song.language === "ru")
-      || (section === "English" && song.language === "en"));
+      || (section === "Английские" && song.language === "en"));
     return matchesSection && (!search || normalize(`${song.title} ${song.artist}`).includes(search));
   });
 }

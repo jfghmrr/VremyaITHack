@@ -6,8 +6,9 @@
 use crate::accounts::Authed;
 use crate::error::{ApiError, ApiResult};
 use crate::lease::{self, Keys, Lease, LeaseError};
+use crate::coop;
 use crate::protocol::{
-    MatchResult, MatchState, MatchView, PlayerResult, PlayerView, ServerMsg, SongRef,
+    MatchMode, MatchResult, MatchState, MatchView, PartResult, PlayerResult, PlayerView, ServerMsg, SongRef, TeamResult,
 };
 use crate::ratings::{self, Rating};
 use crate::realtime::{StreamId, key};
@@ -45,6 +46,7 @@ pub enum Cmd {
     Finish { count: u32 },
     Leave,
     Joined,
+    ShareVoice { on: bool },
 }
 
 /// Запись потока событий матча. `to` — адресное событие, `slot` — чья это кривая.
@@ -91,9 +93,9 @@ async fn one(State(st): State<AppState>, Authed(s): Authed, Path(id): Path<Uuid>
 }
 
 async fn list(State(st): State<AppState>, Authed(s): Authed) -> ApiResult<Json<serde_json::Value>> {
-    type Row = (Uuid, String, String, String, Option<String>, Option<f64>, Option<time::OffsetDateTime>, Option<serde_json::Value>);
+    type Row = (Uuid, String, String, String, String, Option<String>, Option<f64>, Option<time::OffsetDateTime>, Option<serde_json::Value>);
     let rows: Vec<Row> = sqlx::query_as(
-        "SELECT m.id, m.kind, m.state, m.song_id, p.outcome, p.score, m.finished_at, m.result
+        "SELECT m.id, m.kind, m.mode, m.state, m.song_id, p.outcome, p.score, m.finished_at, m.result
          FROM match_participants p JOIN matches m ON m.id = p.match_id
          WHERE p.user_id = $1 AND m.state IN ('finished', 'cancelled', 'failed')
          ORDER BY m.created_at DESC LIMIT 50",
@@ -103,9 +105,9 @@ async fn list(State(st): State<AppState>, Authed(s): Authed) -> ApiResult<Json<s
     .await?;
     let items: Vec<_> = rows
         .into_iter()
-        .map(|(id, kind, state, song, outcome, score, at, result)| {
+        .map(|(id, kind, mode, state, song, outcome, score, at, result)| {
             serde_json::json!({
-                "id": id, "kind": kind, "state": state, "songId": song, "outcome": outcome, "score": score,
+                "id": id, "kind": kind, "mode": mode, "state": state, "songId": song, "outcome": outcome, "score": score,
                 "at": at.and_then(|t| t.format(&time::format_description::well_known::Rfc3339).ok()),
                 "result": result,
             })
@@ -117,6 +119,7 @@ async fn list(State(st): State<AppState>, Authed(s): Authed) -> ApiResult<Json<s
 #[derive(sqlx::FromRow)]
 struct MatchRow {
     kind: String,
+    mode: String,
     state: String,
     song_id: String,
     song_version: String,
@@ -137,6 +140,7 @@ struct PlayerRow {
     peak_mmr: Option<f64>,
     rated_matches: Option<i32>,
     queued_since_ms: Option<i64>,
+    share_voice: bool,
 }
 
 fn standing(st: &AppState, r: Rating) -> String {
@@ -157,7 +161,7 @@ async fn players(st: &AppState, id: Uuid) -> ApiResult<Vec<PlayerView>> {
 
 async fn players_with_queue(st: &AppState, id: Uuid) -> ApiResult<Vec<(PlayerView, Option<i64>)>> {
     let rows: Vec<PlayerRow> = sqlx::query_as(
-        "SELECT p.user_id, p.slot, u.name, r.mmr, r.peak_mmr, r.rated_matches, p.queued_since_ms
+        "SELECT p.user_id, p.slot, u.name, r.mmr, r.peak_mmr, r.rated_matches, p.queued_since_ms, p.share_voice
          FROM match_participants p JOIN users u ON u.id = p.user_id LEFT JOIN ratings r ON r.user_id = p.user_id
          WHERE p.match_id = $1 ORDER BY p.slot",
     )
@@ -184,6 +188,7 @@ async fn players_with_queue(st: &AppState, id: Uuid) -> ApiResult<Vec<(PlayerVie
                 finished: false,
                 left: false,
                 points: 0,
+                share_voice: r.share_voice,
             };
             (view, r.queued_since_ms)
         })
@@ -193,7 +198,7 @@ async fn players_with_queue(st: &AppState, id: Uuid) -> ApiResult<Vec<(PlayerVie
 /// Вид матча по данным PostgreSQL (для завершённых матчей и восстановления).
 pub async fn view_from_db(st: &AppState, id: Uuid) -> ApiResult<Option<MatchView>> {
     let Some(m) = sqlx::query_as::<_, MatchRow>(
-        "SELECT kind, state, song_id, song_version, algorithm_version, duration_s, room_code, start_at, end_reason, result
+        "SELECT kind, mode, state, song_id, song_version, algorithm_version, duration_s, room_code, start_at, end_reason, result
          FROM matches WHERE id = $1",
     )
     .bind(id)
@@ -203,9 +208,12 @@ pub async fn view_from_db(st: &AppState, id: Uuid) -> ApiResult<Option<MatchView
         return Ok(None);
     };
     let title = st.catalog.get(&m.song_id).map_or_else(|| m.song_id.clone(), |s| s.info.title.clone());
+    let mode = MatchMode::parse(&m.mode);
     Ok(Some(MatchView {
         match_id: id,
         kind: m.kind,
+        mode,
+        turns: if mode == MatchMode::Coop { turns_for(st, &m.song_id, &m.song_version) } else { Vec::new() },
         state: MatchState::parse(&m.state).unwrap_or(MatchState::Failed),
         song: SongRef { id: m.song_id, title, version: m.song_version, duration_s: m.duration_s },
         algorithm_version: m.algorithm_version as u32,
@@ -216,6 +224,16 @@ pub async fn view_from_db(st: &AppState, id: Uuid) -> ApiResult<Option<MatchView
         end_reason: m.end_reason,
         result: m.result.and_then(|r| serde_json::from_value(r).ok()),
     }))
+}
+
+/// Расписание «Вместе» для песни той версии, с которой создан матч. Если версия на сервере
+/// другая, расписания нет, а владелец матча завершит его сбоем `song_changed`.
+fn turns_for(st: &AppState, song_id: &str, version: &str) -> Vec<crate::protocol::Turn> {
+    st.catalog
+        .get(song_id)
+        .filter(|s| s.info.version == version)
+        .map(|s| coop::schedule(&s.lines, s.song.duration_s))
+        .unwrap_or_default()
 }
 
 pub fn curve_len(duration_s: f64) -> usize {
@@ -448,6 +466,10 @@ impl Owner {
         self.view.kind == "rated"
     }
 
+    fn coop(&self) -> bool {
+        self.view.mode == MatchMode::Coop
+    }
+
     fn refresh_points(&mut self) {
         for p in self.view.players.iter_mut() {
             p.points = self.curves[p.slot as usize].iter().filter(|x| x.is_some()).count() as u32;
@@ -604,6 +626,29 @@ impl Owner {
                 return self.finalize("left").await;
             }
             Cmd::Leave => return self.cancel("left", Some(user)).await,
+            // Дать согласие можно только до начала песни, снять — в любой момент: снятие никогда
+            // не отклоняется (иначе галочка, снятая в момент общего старта, молча не сработала бы).
+            Cmd::ShareVoice { on } if self.coop() && (!on || matches!(state, MatchState::Waiting | MatchState::ReadyCheck)) => {
+                if self.view.players[i].share_voice != on {
+                    // Согласие пишется в базу: по нему HTTP-маршруты голоса проверяют, что согласны оба.
+                    sqlx::query(
+                        "UPDATE match_participants p SET share_voice = $3 FROM matches m
+                         WHERE p.match_id = $1 AND p.user_id = $2 AND m.id = p.match_id AND m.owner_gen = $4
+                           AND m.state NOT IN ('finished', 'cancelled', 'failed')",
+                    )
+                    .bind(self.lease.id)
+                    .bind(user)
+                    .bind(on)
+                    .bind(self.lease.generation)
+                    .execute(&self.st.db)
+                    .await?;
+                    self.view.players[i].share_voice = on;
+                    self.publish().await?;
+                }
+            }
+            Cmd::ShareVoice { .. } if self.coop() => {
+                self.tell(user, "Согласие поделиться голосом даётся только до начала песни: голос не будет отправлен.").await?;
+            }
             _ => {}
         }
         Ok(Flow::Continue)
@@ -632,6 +677,19 @@ impl Owner {
         // Запас на оценку смещения часов и доставку: клиенты планируют звук по AudioContext.
         let start = self.now() + (self.st.cfg.game.countdown_seconds * 1000.0) as i64;
         self.view.start_at_ms = Some(start);
+        if self.coop() {
+            // «Вместе»: точки вне своих ходов заранее считаются паузой. Первое значение точки
+            // окончательно, поэтому присланное вне хода не учитывается, а полнота кривой
+            // означает «все свои ходы получены».
+            for slot in 0..self.view.players.len() {
+                for (k, point) in self.curves[slot].iter_mut().enumerate() {
+                    if !coop::in_turns(&self.view.turns, slot as u8, k as f64 * CANONICAL_HOP) {
+                        *point = Some(None);
+                    }
+                }
+            }
+            self.refresh_points();
+        }
         for slot in 0..self.view.players.len() as u8 {
             let bytes = encode_curve(&self.curves[slot as usize]);
             self.lease.write_curve(&mut self.conn, slot, None, &bytes).await?;
@@ -832,17 +890,41 @@ impl Owner {
             // Результат не выдумывается: без полной кривой у обоих рейтинг не меняется.
             return self.fail(if reason == "completed" { "incomplete" } else { reason }).await;
         }
-        let frames: Vec<Option<Vec<scoring_core::PitchFrame>>> = (0..count)
-            .map(|i| complete[i].then(|| scoring_core::dequantize(&self.curves[i].iter().map(|p| p.flatten()).collect::<Vec<_>>())))
-            .collect();
+        let curves: Vec<Option<Vec<Option<i16>>>> =
+            (0..count).map(|i| complete[i].then(|| self.curves[i].iter().map(|p| p.flatten()).collect())).collect();
         let song = self.song.clone();
-        let scores = match self.st.compute.run(move || frames.iter().map(|f| f.as_ref().map(|f| scoring_core::score_performance(f, &song))).collect::<Vec<_>>()).await {
+        let coop = self.coop();
+        let turns = self.view.turns.clone();
+        let slots: Vec<u8> = self.view.players.iter().map(|p| p.slot).collect();
+        // «Вместе»: каждая партия оценивается по эталону своих ходов; «Кто лучше» — по всей песне.
+        let job = {
+            let (song, turns, slots) = (song.clone(), turns.clone(), slots.clone());
+            move || {
+                curves
+                    .iter()
+                    .zip(&slots)
+                    .map(|(c, &slot)| {
+                        c.as_ref().map(|c| {
+                            if coop {
+                                coop::score_part(c, &song, &turns, slot)
+                            } else {
+                                scoring_core::score_performance(&scoring_core::dequantize(c), &song)
+                            }
+                        })
+                    })
+                    .collect::<Vec<_>>()
+            }
+        };
+        let scores = match self.st.compute.run(job).await {
             Ok(s) => s,
             // Пул переполнен: состояние collecting сохраняется, повтор на следующем такте.
             Err(_) => return Ok(Flow::Continue),
         };
         let technical = lost.iter().any(|l| *l);
-        let outcomes: Vec<Outcome> = if technical {
+        let outcomes: Vec<Outcome> = if coop {
+            // Совместное исполнение: победителя и проигравшего нет.
+            vec![Outcome::Draw; count]
+        } else if technical {
             lost.iter().map(|l| if *l { Outcome::Loss } else { Outcome::Win }).collect()
         } else {
             let (a, b) = (scores[0].as_ref().unwrap().score, scores[1].as_ref().unwrap().score);
@@ -948,7 +1030,24 @@ impl Owner {
             .await?;
             results.push(res);
         }
-        let result = MatchResult { rated, technical, players: results };
+        let team = coop.then(|| {
+            let parts: Vec<PartResult> = (0..count)
+                .map(|i| {
+                    let slot = slots[i];
+                    PartResult {
+                        user_id: self.view.players[i].user_id,
+                        slot,
+                        turns: turns.iter().filter(|t| t.slot == slot).count() as u32,
+                        seconds: (coop::part_seconds(&song, &turns, slot) * 100.0).round() / 100.0,
+                        score: scores[i].as_ref().map(|s| s.score),
+                        hardest: scores[i].as_ref().and_then(coop::hardest),
+                    }
+                })
+                .collect();
+            let score = coop::team_score(&parts.iter().map(|p| (p.seconds, p.score)).collect::<Vec<_>>());
+            TeamResult { score, parts }
+        });
+        let result = MatchResult { rated, technical, players: results, team };
         sqlx::query("UPDATE matches SET result = $2 WHERE id = $1").bind(self.lease.id).bind(serde_json::to_value(&result).ok()).execute(&mut *tx).await?;
         tx.commit().await?;
         self.view.state = MatchState::Finished;
@@ -998,16 +1097,22 @@ fn busy_error(e: &sqlx::Error) -> bool {
 }
 
 pub const ALREADY_BUSY: &str = "Ты уже в другом матче. Заверши его, чтобы начать новый.";
+pub const REMATCH_EXPIRED: &str = "Реванш можно предложить в течение 15 минут после матча. Создай новую комнату.";
 
-/// Комната для игры с другом: нерейтинговый матч, вход по коду.
-pub async fn create_room(st: &AppState, host: Uuid, song_id: &str) -> ApiResult<(Uuid, String)> {
+pub const COOP_TOO_SHORT: &str = "Для режима «Вместе» в песне нужно хотя бы две строки. Выбери другую песню.";
+
+/// Комната для игры с другом: нерейтинговый матч, вход по коду. `mode` — «Кто лучше» или «Вместе».
+pub async fn create_room(st: &AppState, host: Uuid, song_id: &str, mode: MatchMode) -> ApiResult<(Uuid, String)> {
     let song = st.catalog.get(song_id).ok_or_else(|| ApiError::bad("Такой песни нет в каталоге."))?;
+    if mode == MatchMode::Coop && coop::schedule(&song.lines, song.song.duration_s).len() < coop::MIN_TURNS {
+        return Err(ApiError::bad(COOP_TOO_SHORT));
+    }
     for _ in 0..5 {
         let (id, code) = (Uuid::new_v4(), room_code());
         let mut tx = st.db.begin().await?;
         let inserted = sqlx::query(
-            "INSERT INTO matches (id, kind, state, song_id, song_version, algorithm_version, duration_s, room_code)
-             VALUES ($1, 'friend', 'created', $2, $3, $4, $5, $6) ON CONFLICT (room_code) DO NOTHING",
+            "INSERT INTO matches (id, kind, mode, state, song_id, song_version, algorithm_version, duration_s, room_code)
+             VALUES ($1, 'friend', $7, 'created', $2, $3, $4, $5, $6) ON CONFLICT (room_code) DO NOTHING",
         )
         .bind(id)
         .bind(&song.info.id)
@@ -1015,6 +1120,7 @@ pub async fn create_room(st: &AppState, host: Uuid, song_id: &str) -> ApiResult<
         .bind(scoring_core::ALGORITHM_VERSION as i32)
         .bind(song.info.duration_s)
         .bind(&code)
+        .bind(mode.as_str())
         .execute(&mut *tx)
         .await?
         .rows_affected();
@@ -1062,23 +1168,90 @@ pub async fn join_room(st: &AppState, user: Uuid, code: &str) -> ApiResult<Uuid>
     Ok(id)
 }
 
-/// Реванш в дружеском режиме: новая нерейтинговая комната с той же песней.
-pub async fn rematch(st: &AppState, user: Uuid, previous: Uuid) -> ApiResult<(Uuid, String, Uuid)> {
-    let row: Option<(String, String, String)> = sqlx::query_as("SELECT kind, state, song_id FROM matches WHERE id = $1")
-        .bind(previous)
-        .fetch_optional(&st.db)
-        .await?;
-    let Some((kind, state, song)) = row else { return Err(ApiError::bad("Матч не найден.")) };
-    if kind != "friend" || !MatchState::parse(&state).is_some_and(MatchState::terminal) || !is_member(st, previous, user).await? {
-        return Err(ApiError::bad("Реванш доступен после дружеского матча."));
+/// Итог команды `rematch`: комната, второй участник прошлого матча и открыл ли игрок комнату
+/// только что. Приглашение сопернику уходит только тогда: второй нажавший входит в уже открытую
+/// комнату, а повтор команды (после переподключения клиент заново шлёт неподтверждённые) ничего
+/// не создаёт и приглашение не дублирует.
+pub struct Rematch {
+    pub id: Uuid,
+    pub code: String,
+    pub other: Uuid,
+    pub created: bool,
+    /// Режим прошлого матча: реванш «Вместе» — снова «Вместе».
+    pub mode: MatchMode,
+}
+
+/// Реванш после любого завершённого матча (рейтингового тоже): нерейтинговая комната с той же
+/// песней для тех же двоих. Кто нажал первым, открывает комнату и приглашает соперника; второй
+/// нажавший попадает в ту же комнату, а не создаёт вторую. Комната реванша запоминается в
+/// Valkey `kv:rm:{прошлый матч}` на срок жизни комнаты.
+pub async fn rematch(st: &AppState, user: Uuid, previous: Uuid) -> ApiResult<Rematch> {
+    // Реванш предлагается сразу после матча: не позже срока жизни комнаты (ROOM_SECONDS).
+    let row: Option<(String, String, bool, String)> = sqlx::query_as(
+        "SELECT state, song_id, coalesce(finished_at >= now() - make_interval(secs => $2), false), mode FROM matches WHERE id = $1",
+    )
+    .bind(previous)
+    .bind(ROOM_SECONDS as f64)
+    .fetch_optional(&st.db)
+    .await?;
+    let Some((state, song, recent, mode)) = row else { return Err(ApiError::bad("Матч не найден.")) };
+    let mode = MatchMode::parse(&mode);
+    if !MatchState::parse(&state).is_some_and(MatchState::terminal) || !is_member(st, previous, user).await? {
+        return Err(ApiError::bad("Реванш доступен после окончания матча."));
     }
-    let other: (Uuid,) = sqlx::query_as("SELECT user_id FROM match_participants WHERE match_id = $1 AND user_id <> $2")
+    if !recent {
+        return Err(ApiError::bad(REMATCH_EXPIRED));
+    }
+    let other: Option<(Uuid,)> = sqlx::query_as("SELECT user_id FROM match_participants WHERE match_id = $1 AND user_id <> $2")
         .bind(previous)
         .bind(user)
-        .fetch_one(&st.db)
+        .fetch_optional(&st.db)
         .await?;
-    let (id, code) = create_room(st, user, &song).await?;
-    Ok((id, code, other.0))
+    let Some((other,)) = other else { return Err(ApiError::bad("Соперник этого матча не найден.")) };
+    let mut c = st.valkey.clone();
+    let slot = key(format_args!("rm:{previous}"));
+    // Первый нажавший занимает ключ меткой и открывает комнату; второй ждёт её номер.
+    for _ in 0..40 {
+        let claimed: bool = redis::cmd("SET").arg(&slot).arg("pending").arg("NX").arg("EX").arg(30).query_async::<Option<String>>(&mut c).await?.is_some();
+        if claimed {
+            let made = create_room(st, user, &song, mode).await;
+            let (id, code) = match made {
+                Ok(v) => v,
+                Err(e) => {
+                    let _: redis::RedisResult<()> = c.del(&slot).await;
+                    return Err(e);
+                }
+            };
+            let _: () = c.set_ex(&slot, id.to_string(), ROOM_SECONDS as u64).await?;
+            return Ok(Rematch { id, code, other, created: true, mode });
+        }
+        let held: Option<String> = c.get(&slot).await?;
+        match held.as_deref().map(Uuid::parse_str) {
+            Some(Ok(id)) => {
+                let room: Option<(String, String)> = sqlx::query_as("SELECT state, coalesce(room_code, '') FROM matches WHERE id = $1")
+                    .bind(id)
+                    .fetch_optional(&st.db)
+                    .await?;
+                match room {
+                    // Комната ещё ждёт: второй нажавший входит в неё (повтор того же игрока — тоже).
+                    Some((state, code)) if matches!(state.as_str(), "created" | "waiting") => {
+                        if !is_member(st, id, user).await? {
+                            join_room(st, user, &code).await?;
+                        }
+                        return Ok(Rematch { id, code, other, created: false, mode });
+                    }
+                    // Прежняя комната реванша уже сыграна или закрыта: можно открыть новую.
+                    _ => {
+                        let _: redis::RedisResult<()> = c.del(&slot).await;
+                    }
+                }
+            }
+            // Соперник как раз открывает комнату.
+            Some(Err(_)) => tokio::time::sleep(Duration::from_millis(50)).await,
+            None => {}
+        }
+    }
+    Err(ApiError::busy())
 }
 
 #[cfg(test)]

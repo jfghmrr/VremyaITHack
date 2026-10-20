@@ -174,6 +174,9 @@ export class Player {
       }
     } else if (msg.type === "match") {
       if (msg.seq == null || !(this.view?.match_id === msg.view.match_id && msg.seq <= this.lastSeq)) {
+        // Как в браузерном клиенте: состояние нового матча без номера (из базы) сбрасывает счёт,
+        // иначе события только что созданной комнаты отбрасывались бы номерами прошлого матча.
+        if (msg.seq == null && this.view?.match_id !== msg.view.match_id) this.lastSeq = 0;
         if (msg.seq != null) this.lastSeq = msg.seq;
         this.view = msg.view;
       }

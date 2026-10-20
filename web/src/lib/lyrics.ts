@@ -1,4 +1,5 @@
 import type { Song } from './scoring/types';
+import { asset, entryFor, loadCatalog } from './catalog';
 export type TimedWord = { text: string; start_s: number; end_s: number };
 export type WordTiming = { v: 1; lines: { line: number; words: TimedWord[] }[] };
 
@@ -23,3 +24,27 @@ export function wordProgress(word: TimedWord, time: number) {
   return Math.max(0, Math.min(1, (time - word.start_s) / (word.end_s - word.start_s)));
 }
 export const isCurrentWord = (word: TimedWord, time: number) => time >= word.start_s && time < word.end_s;
+
+/** Номер строки, которая звучит в момент time (−1 до первой строки); границы — по началу строки. */
+export function lineAt(lyrics: { t: number }[], time: number): number {
+  if (!(time >= 0)) return -1;
+  let lo = 0, hi = lyrics.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (lyrics[mid].t <= time) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo - 1;
+}
+
+/** Разметка слов из каталога (lyrics.words.json); без неё или при ошибке — null, слова показываются строками. */
+export async function loadWordTiming(song: Song): Promise<WordTiming | null> {
+  try {
+    const file = entryFor(song.id, await loadCatalog())?.wordTiming;
+    if (!file) return null;
+    const response = await fetch(asset(song.id, file));
+    return response.ok ? parseWordTiming(await response.json(), song) : null;
+  } catch {
+    return null;
+  }
+}

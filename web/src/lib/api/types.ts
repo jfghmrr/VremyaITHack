@@ -61,6 +61,11 @@ export type ClientEnvelope = {
       type: "queue_leave";
     }
   | {
+      /**
+       * Режим матча. «Кто лучше» (`versus`) — дуэль: оба поют всю песню, побеждает точность.
+       * «Вместе» (`coop`) — только комната друга: поют по очереди, по строке, общий балл без победителя.
+       */
+      mode?: "versus" | "coop";
       song_id: string;
       type: "room_create";
     }
@@ -101,6 +106,11 @@ export type ClientEnvelope = {
       match_id: string;
       type: "rematch";
     }
+  | {
+      match_id: string;
+      on: boolean;
+      type: "voice_share";
+    }
 );
 
 export interface Friends {
@@ -137,6 +147,7 @@ export interface LeaderRow {
 }
 
 export type Outcome = "win" | "draw" | "loss";
+export type Reason = "pitch" | "rhythm" | "missing";
 export type MatchState =
   "created" | "waiting" | "ready_check" | "countdown" | "singing" | "collecting" | "finished" | "cancelled" | "failed";
 
@@ -149,6 +160,10 @@ export interface MatchView {
   end_reason?: string | null;
   kind: string;
   match_id: string;
+  /**
+   * Режим: «Кто лучше» или «Вместе». Прежние клиенты поле не знают и видят обычную дуэль.
+   */
+  mode?: "versus" | "coop";
   players: PlayerView[];
   result?: MatchResult | null;
   room_code?: string | null;
@@ -158,6 +173,10 @@ export interface MatchView {
    */
   start_at_ms?: number | null;
   state: MatchState;
+  /**
+   * Расписание ходов «Вместе»; у «Кто лучше» пусто и не передаётся.
+   */
+  turns?: Turn[];
 }
 export interface PlayerView {
   accepted: boolean;
@@ -170,6 +189,10 @@ export interface PlayerView {
    */
   points: number;
   ready: boolean;
+  /**
+   * «Вместе»: участник согласился поделиться голосом с партнёром.
+   */
+  share_voice?: boolean;
   slot: number;
   /**
    * Ранг или «Калибровка n/10»; MMR соперника не раскрывается.
@@ -178,8 +201,16 @@ export interface PlayerView {
   user_id: string;
 }
 export interface MatchResult {
+  /**
+   * Для «Вместе» `score` и `axes` каждого — оценка его партии (только его ходы),
+   * исход у обоих `draw`: победителя нет.
+   */
   players: PlayerResult[];
   rated: boolean;
+  /**
+   * Только «Вместе»: общий балл и партии.
+   */
+  team?: TeamResult | null;
   technical: boolean;
 }
 export interface PlayerResult {
@@ -201,11 +232,51 @@ export interface Axes {
   rhythm: number;
   stability: number;
 }
+/**
+ * Итог «Вместе»: общий балл — среднее партий, взвешенное по длительности спетой мелодии.
+ */
+export interface TeamResult {
+  parts: PartResult[];
+  /**
+   * null, если хотя бы одна партия не оценена (неполная кривая).
+   */
+  score?: number | null;
+}
+export interface PartResult {
+  /**
+   * Самое трудное место партии (окно разбора ядра).
+   */
+  hardest?: HardMoment | null;
+  score?: number | null;
+  /**
+   * Длительность мелодии эталона в ходах участника, с: вес партии в общем балле.
+   */
+  seconds: number;
+  slot: number;
+  turns: number;
+  user_id: string;
+}
+export interface HardMoment {
+  end_s: number;
+  reason: Reason;
+  start_s: number;
+}
 export interface SongRef {
   duration_s: number;
   id: string;
   title: string;
   version: string;
+}
+/**
+ * Ход режима «Вместе»: участник `slot` поёт с `start_s` до `end_s` (секунды от начала песни,
+ * окно строки с небольшим запасом) строки текста `lines` (номера в `lyrics` эталона).
+ * Расписание строит сервер (`coop::schedule`); клиенты его не пересчитывают.
+ */
+export interface Turn {
+  end_s: number;
+  lines: number[];
+  slot: number;
+  start_s: number;
 }
 
 export interface Profile {
@@ -282,7 +353,13 @@ export type ServerEnvelope = {
     }
   | {
       code: string;
+      invite?: boolean;
       match_id: string;
+      /**
+       * Режим комнаты: приглашение на реванш называет его.
+       */
+      mode?: "versus" | "coop";
+      rematch_of?: string | null;
       type: "room";
     }
   | {

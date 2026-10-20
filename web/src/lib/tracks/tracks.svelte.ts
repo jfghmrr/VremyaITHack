@@ -1,6 +1,8 @@
 // Свои треки (контракт C3): список владельца, загрузка отрывка, удаление. Пока хоть один трек
 // ждёт или обрабатывается, список обновляется каждые 3 секунды. Треки живут 24 часа.
 import { ApiError, api } from "#lib/api/http.ts";
+import { forgetSong } from "#lib/catalog.ts";
+import type { TimedWord } from "#lib/lyrics.ts";
 
 export type TrackStatus = "queued" | "running" | "ready" | "failed" | "offline";
 
@@ -78,6 +80,16 @@ export async function sendTrackAudio(id: string, wav: Uint8Array<ArrayBuffer>) {
 export async function deleteTrack(id: string) {
   await api(`tracks/${encodeURIComponent(id)}`, { method: "DELETE" });
   tracks.list = tracks.list.filter((t) => t.id !== id);
+}
+
+/** Сохраняет исправленный текст и времена строк готового трека (только владелец). */
+export async function saveLyrics(id: string, body: { lines: { words: TimedWord[] }[] }) {
+  const saved = await api<{ lines: { line: number; words: TimedWord[] }[]; masked: number }>(`tracks/${encodeURIComponent(id)}/lyrics`, {
+    method: "PUT",
+    body,
+  });
+  forgetSong(`my-${id}`);
+  return saved;
 }
 
 const STAGES = { separating: "Отделяем голос", melody: "Мелодия", words: "Слова" } as const;

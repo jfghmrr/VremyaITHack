@@ -2,7 +2,7 @@
    акцент. Вишнёвый — всегда «твой голос», пыльно-синий — всегда соперник, карандаш — эталон. */
 @font-face {
   font-family: "Golos Text";
-  src: url("/fonts/GolosText.ttf") format("truetype");
+  src: url("/fonts/GolosText.woff2") format("woff2");
   font-weight: 400 900;
   font-display: swap;
 }
@@ -128,6 +128,8 @@
   --gutter: clamp(16px, 3vw, 44px);
   /* Высота шапки, подвала и нижнего отступа: экраны на 1366×768 помещаются без прокрутки. */
   --chrome: 112px;
+  /* Ярлык заголовка страницы (TitleStrip): одинаковый отступ сверху на всех страницах. */
+  --title-top: clamp(10px, 2.6svh, 24px);
   /* Высота шапки с вкладками: экраны-сцены занимают остаток окна. */
   --nav-h: 62px;
   --control-h: 40px;
@@ -171,7 +173,19 @@
    medium   (min-width: 600px) and (max-width: 1099px) and (min-height: 521px)   планшет, узкое окно
    wide     (min-width: 1100px) and (min-height: 521px)                 ноутбук и монитор: абсолютные сцены
    xwide    (min-width: 2200px), (min-aspect-ratio: 21/9)               контейнер до 1680 px, шрифт через clamp()
-   не wide  not all and (min-width: 1100px) and (min-height: 521px)     сцены идут потоком, цели нажатия 44 px */
+   не wide  not all and (min-width: 1100px) and (min-height: 521px)     сцены идут потоком, цели нажатия 44 px
+
+   Высота окна в wide для страниц-потоков (кабинет, «Свои люди», дуэли; 17.10.2026). Каждая
+   страница пишет запрос вместе с (min-width: 1100px) and (min-height: 521px):
+   wide-low     (max-height: 760px)   кабинет: пункты «Что даёт кабинет» плотнее (1280×720 без прокрутки)
+   wide-short   (max-height: 820px)   дуэли: подсказка плотнее (поиск с длинным пояснением в 1366×768)
+   wide-snug    (max-height: 850px)   «Свои люди» (вошедший): листы плотнее, без кота-подсказки
+   wide-note    (min-height: 940px)   кабинет: записка «Без кабинета тоже можно» (с кнопками Яндекс ID
+                                      и VK ID помещается без прокрутки только отсюда)
+   wide-tall    (min-height: 900px)   отступы растут с svh (кабинет, дуэли); «Свои люди» — группа по
+                                      центру по вертикали
+   wide-taller  (min-height: 960px)   «Свои люди» (гость): крупные полароиды, текст шагов под ними
+   Проверка: web/tests/e2e/composition.spec.ts. */
 @media (min-width: 2200px), (min-aspect-ratio: 21/9) {
   :root {
     --container: 1680px;

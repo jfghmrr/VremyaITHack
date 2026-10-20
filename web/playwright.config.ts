@@ -32,10 +32,12 @@ export default defineConfig({
     },
     {
       // Эмуляция Safari (телефоны — isMobile и hasTouch в самих сценариях): матрица
-      // устройств и страница ошибки. Синтетический микрофон подменяет getUserMedia в
-      // странице и не требует флагов Chromium, поэтому пение проверяется и здесь.
+      // устройств, страница ошибки, отложенная загрузка декора, масштаб сцен, композиция страниц
+      // и настоящие голоса «Вместе» (компьютер + iPhone в отдельном WebKit). Синтетический микрофон
+      // подменяет getUserMedia в странице и не требует флагов Chromium, поэтому пение
+      // проверяется и здесь (в том числе своя линия, которая не прыгает: stage-line.spec.ts).
       name: "webkit",
-      testMatch: ["responsive.spec.ts", "error-page.spec.ts"],
+      testMatch: ["responsive.spec.ts", "error-page.spec.ts", "sing-stage.spec.ts", "stage-line.spec.ts", "lazy-art.spec.ts", "tracks-lyrics.spec.ts", "scaling.spec.ts", "menu.spec.ts", "composition.spec.ts", "coop-voices.spec.ts", "desktop-pixels.spec.ts", "tabbar.spec.ts"],
       use: { browserName: "webkit" },
     },
   ],

@@ -1,9 +1,11 @@
 <script lang="ts">
-  let { label, note = "", side = "A", tone = "black", spinning = false, width = 260 }: { label: string; note?: string; side?: string; tone?: "black" | "red" | "clear" | "blue"; spinning?: boolean; width?: number } = $props();
-  const photos = { black: "black-s01", red: "red-s01", clear: "clear-s01", blue: "blue-s03" };
+  import { artDims } from "./art";
+  let { label, note = "", side = "A", tone = "black", spinning = false, width = 260 }: { label: string; note?: string; side?: string; tone?: "black" | "red"; spinning?: boolean; width?: number } = $props();
+  // Чистые наклейки: на исходных вырезках набора были написаны реальные группы и песни (удалены 17.10.2026).
+  const photos = { black: "black-blank", red: "red-blank" };
 </script>
 <div class="cassette" class:spinning style:width="{width}px" aria-hidden="true">
-  <img src="/art/cassettes/cassette-{photos[tone]}.webp?v=restored-1" alt="" />
+  <img src="/art/cassettes/cassette-{photos[tone]}.webp?v=web-1" alt="" {...artDims(`cassettes/cassette-${photos[tone]}`)} loading="lazy" />
   <span class="label">{label}</span><span class="side">{side}</span>
   <i class="reel one"></i><i class="reel two"></i>
   {#if note}<span class="note-label">{note}</span>{/if}

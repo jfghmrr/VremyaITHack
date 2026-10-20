@@ -73,7 +73,7 @@ it("сессия: создание, куски по порядку и завер
   for (let i = 0; i < audio.length; i += 4096) perf.push(audio.subarray(i, i + 4096), 48000);
   await expect(perf.finish()).resolves.toBe("p1");
   expect(calls.map((c) => `${c.method} ${c.url}`)).toEqual(["POST /api/perf", "PUT /api/perf/p1/chunk?seq=0", "PUT /api/perf/p1/chunk?seq=1", "POST /api/perf/p1/finish"]);
-  expect(calls[0].body).toEqual({ songId: "cn-earth", mode: "speaker", voiceConsent: true, consentVersion: "2026-10-17" });
+  expect(calls[0].body).toEqual({ songId: "cn-earth", mode: "speaker", voiceConsent: true, consentVersion: "2026-10-18" });
   expect(calls[1].body).toBe(160_000);
   expect(calls[2].body).toBe(64_000);
   expect(calls[3].body).toEqual({ chunks: 2 });

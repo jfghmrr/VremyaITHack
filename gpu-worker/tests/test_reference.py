@@ -9,10 +9,11 @@ def words_at(starts, length=0.3, text="слово"):
     return [AsrWord(text=f"{text}{i}", start_s=s, end_s=s + length) for i, s in enumerate(starts)]
 
 
-def test_group_lines_splits_on_pause_and_eight_words():
+def test_group_lines_splits_on_pause_and_long_lines():
+    # Ten evenly spaced words have no pause to prefer: the line is halved, not cut after 8 words.
     words = words_at([0.5, 0.9, 1.3, 2.6, 3.0] + [5.0 + 0.4 * i for i in range(10)])
     lines = group_lines(words)
-    assert [len(line) for line in lines] == [3, 2, 8, 2]
+    assert [len(line) for line in lines] == [3, 2, 5, 5]
 
 
 def test_clean_words_makes_times_monotonic_and_trims_to_duration():

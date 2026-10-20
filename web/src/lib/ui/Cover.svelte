@@ -27,8 +27,15 @@
 </script>
 
 <script lang="ts">
-  let { id, title, contour }: { id: string; title: string; contour?: (number | null)[] } = $props();
+  import { contourDrawable, smoothContour } from "./cover-contour.ts";
+  let { id, title, contour: raw }: { id: string; title: string; contour?: (number | null)[] } = $props();
 
+  // Контур со сглаженными короткими паузами; слишком рваный — не рисуется (волны вместо него).
+  const contour = $derived.by(() => {
+    if (!raw) return undefined;
+    const s = smoothContour(raw);
+    return contourDrawable(s) ? s : undefined;
+  });
   const h = $derived(hash(id));
   const pal = $derived(PALETTES[h % PALETTES.length]);
   const motif = $derived(MOTIFS[(h >>> 4) % MOTIFS.length] === "contour" && !contour ? "waves" : MOTIFS[(h >>> 4) % MOTIFS.length]);

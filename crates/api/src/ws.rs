@@ -51,6 +51,9 @@ struct Connection {
     last_seq: u64,
     tokens: f64,
     refilled: Instant,
+    /// Последнее состояние очереди, отправленное клиенту, — «ищем». Пока это так, heartbeat
+    /// сообщает актуальное состояние, даже если заявки уже нет: поиск на экране не крутится вечно.
+    searching: bool,
 }
 
 fn envelope(seq: Option<u64>, msg: ServerMsg) -> Message {
@@ -71,12 +74,16 @@ impl Connection {
             last_seq: 0,
             tokens: BURST,
             refilled: Instant::now(),
+            searching: false,
         }
     }
 
     /// Отправка без ожидания: переполненная очередь означает слишком медленного клиента.
     /// Соединение закрывается, клиент переподключится и получит актуальное состояние.
     fn send(&mut self, seq: Option<u64>, msg: ServerMsg) -> bool {
+        if let ServerMsg::Queue { state } = &msg {
+            self.searching = matches!(state.status, QueueStatus::Searching);
+        }
         match &self.out {
             Some(tx) => tx.try_send(envelope(seq, msg)).is_ok(),
             None => false,
@@ -223,10 +230,6 @@ impl Connection {
             server_time: now_ms() as f64,
             heartbeat_ms: self.st.cfg.game.heartbeat_seconds * 1000,
         });
-        if let Ok(q) = queue::state_of(&self.st, self.user).await {
-            queue::touch(&self.st, self.user).await;
-            self.send(None, ServerMsg::Queue { state: q });
-        }
         let active = matches::active_match(&self.st, self.user).await.ok().flatten();
         // Завершённый матч, итог которого клиент мог не увидеть.
         let target = match (active, resume) {
@@ -234,10 +237,17 @@ impl Connection {
             (None, Some(id)) if matches::is_member(&self.st, id, self.user).await.unwrap_or(false) => Some(id),
             _ => None,
         };
-        match target {
+        // Сначала матч, потом очередь: клиент, который искал соперника, по пустой очереди после
+        // переподключения возобновляет поиск, а матч, найденный за время разрыва, уже у него.
+        let sub = match target {
             Some(id) => self.attach(id).await,
             None => None,
+        };
+        if let Ok(q) = queue::state_of(&self.st, self.user).await {
+            queue::touch(&self.st, self.user).await;
+            self.send(None, ServerMsg::Queue { state: q });
         }
+        sub
     }
 
     /// Подписка на события матча с начала потока: клиент получает актуальное состояние,
@@ -276,6 +286,18 @@ impl Connection {
         self.send(ev.seq, ev.msg)
     }
 
+    /// Игрок вошёл в комнату друга: рейтинговый поиск снимается. Если подбор успел свести его до
+    /// этого, пара не создастся (игрок уже занят), а заявка снимется с пояснением «уже в другом матче».
+    async fn leave_queue_for_room(&mut self) {
+        match queue::leave_for_room(&self.st, self.user).await {
+            Ok(Some(state)) => {
+                self.send(None, ServerMsg::Queue { state });
+            }
+            Ok(None) => {}
+            Err(e) => tracing::warn!(error = %e.message, "queue leave for room failed"),
+        }
+    }
+
     /// Возвращает (успех, ошибка, матч для подписки).
     async fn command(&mut self, msg: ClientMsg) -> (bool, Option<String>, Option<Uuid>) {
         let st = self.st.clone();
@@ -285,10 +307,17 @@ impl Connection {
             ClientMsg::Ping { c } => {
                 self.send(None, ServerMsg::Pong { c, s: now_ms() as f64 });
                 queue::touch(&st, user).await;
-                if let Ok(q) = queue::state_of(&st, user).await
-                    && matches!(q.status, QueueStatus::Searching)
-                {
-                    self.send(None, ServerMsg::Queue { state: q });
+                if let Ok(q) = queue::state_of(&st, user).await {
+                    let report = match q.status {
+                        QueueStatus::Searching => true,
+                        // Заявки больше нет, а клиент видит «ищем»: сообщаем об этом, если только это
+                        // не найденный матч — о нём сейчас придёт событие «соперник найден».
+                        _ if self.searching => matches::active_match(&st, user).await.ok().flatten().is_none(),
+                        _ => false,
+                    };
+                    if report {
+                        self.send(None, ServerMsg::Queue { state: q });
+                    }
                 }
                 (true, None, None)
             }
@@ -306,22 +335,37 @@ impl Connection {
                 }
                 Err(e) => err(e),
             },
-            ClientMsg::RoomCreate { song_id } => match matches::create_room(&st, user, &song_id).await {
+            // Комната друга и реванш снимают рейтинговый поиск (один матч за раз) и сообщают об этом —
+            // только когда игрок действительно вошёл в комнату: неудача поиск не трогает.
+            ClientMsg::RoomCreate { song_id, mode } => match matches::create_room(&st, user, &song_id, mode).await {
                 Ok((id, code)) => {
-                    self.send(None, ServerMsg::Room { match_id: id, code });
+                    self.leave_queue_for_room().await;
+                    self.send(None, ServerMsg::Room { match_id: id, code, rematch_of: None, invite: false, mode });
                     (true, None, Some(id))
                 }
                 Err(e) => err(e),
             },
             ClientMsg::RoomJoin { code } => match matches::join_room(&st, user, &code).await {
-                Ok(id) => (true, None, Some(id)),
+                Ok(id) => {
+                    self.leave_queue_for_room().await;
+                    (true, None, Some(id))
+                }
                 Err(e) => err(e),
             },
             ClientMsg::Rematch { match_id } => match matches::rematch(&st, user, match_id).await {
-                Ok((id, code, other)) => {
-                    self.send(None, ServerMsg::Room { match_id: id, code: code.clone() });
-                    queue::notify(&st, other, &ServerMsg::Room { match_id: id, code }).await;
-                    (true, None, Some(id))
+                Ok(r) => {
+                    self.leave_queue_for_room().await;
+                    let room = ServerMsg::Room { match_id: r.id, code: r.code, rematch_of: Some(match_id), invite: false, mode: r.mode };
+                    self.send(None, room.clone());
+                    // Первому нажавшему — комната, сопернику — приглашение, только когда комната
+                    // открыта этой командой. Второй нажавший уже вошёл в ту же комнату (соперник увидит
+                    // это по состоянию матча), а повтор команды после переподключения приглашение не дублирует.
+                    if r.created
+                        && let ServerMsg::Room { match_id: id, code, .. } = room
+                    {
+                        queue::notify(&st, r.other, &ServerMsg::Room { match_id: id, code, rematch_of: Some(match_id), invite: true, mode: r.mode }).await;
+                    }
+                    (true, None, Some(r.id))
                 }
                 Err(e) => err(e),
             },
@@ -331,6 +375,13 @@ impl Connection {
                 // Доступ к конкретному матчу проверяется при каждой команде.
                 if self.match_id != Some(match_id) && !matches::is_member(&st, match_id, user).await.unwrap_or(false) {
                     return (false, Some("Нет доступа к этому матчу.".into()), None);
+                }
+                // Снятие согласия на голос «Вместе» действует сразу и после конца матча, когда
+                // владельца уже нет: флаг в базе снимается здесь, загруженные голоса удаляются.
+                if let ClientMsg::VoiceShare { on: false, .. } = other
+                    && let Err(e) = crate::voices::withdraw(&st, match_id, user).await
+                {
+                    return err(e);
                 }
                 let cmd = match other {
                     ClientMsg::Accept { .. } => Cmd::Accept,
@@ -344,6 +395,7 @@ impl Connection {
                     }
                     ClientMsg::Finish { count, .. } => Cmd::Finish { count },
                     ClientMsg::Leave { .. } => Cmd::Leave,
+                    ClientMsg::VoiceShare { on, .. } => Cmd::ShareVoice { on },
                     _ => return (false, None, None),
                 };
                 let follow = (self.match_id != Some(match_id)).then_some(match_id);

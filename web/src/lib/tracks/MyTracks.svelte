@@ -50,6 +50,7 @@
             <div class="state">
               {#if track.status === "ready"}
                 <a class="btn btn-primary" href="/sing/my-{track.id}">Готово — петь</a>
+                <a class="btn btn-quiet" href="/tracks/{track.id}/lyrics" aria-label="Править текст «{track.title}»">Править текст</a>
               {:else}
                 <span class="status">{statusText(track)}</span>
                 {#if track.status === "failed" && track.error}<span class="reason">{track.error}</span>{/if}

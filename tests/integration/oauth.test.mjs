@@ -184,7 +184,7 @@ describe("вход через Яндекс ID и VK ID", { concurrency: false },
     assert.deepEqual(profile.providers, ["yandex"]);
     const me = await (await get("me", session)).json();
     assert.deepEqual(me.profile, profile);
-    assert.equal(sql(`SELECT consent_version || ' ' || age_group || ' ' || (consent_at IS NOT NULL) FROM users WHERE id = '${profile.id}'`), "2026-10-17 14plus true");
+    assert.equal(sql(`SELECT consent_version || ' ' || age_group || ' ' || (consent_at IS NOT NULL) FROM users WHERE id = '${profile.id}'`), "2026-10-18 14plus true");
     assert.equal(sql(`SELECT provider || ':' || subject FROM identities WHERE user_id = '${profile.id}'`), "yandex:id-alice");
     assert.equal((await post("auth/complete", { token, consent: true, ageGroup: "14plus" }, bound)).status, 400, "токен одноразовый");
     const replay = await callback("yandex", { code: "alice", state: s.state }, s.cookie);
@@ -268,7 +268,7 @@ describe("регистрация с возрастом и кабинет без 
     assert.equal(profile.email, input.email);
     assert.equal(profile.hasPassword, true);
     assert.deepEqual(profile.providers, []);
-    assert.equal(sql(`SELECT age_group || ' ' || parent_name || ' ' || consent_version FROM users WHERE id = '${profile.id}'`), "under14 Мария Иванова 2026-10-17");
+    assert.equal(sql(`SELECT age_group || ' ' || parent_name || ' ' || consent_version FROM users WHERE id = '${profile.id}'`), "under14 Мария Иванова 2026-10-18");
     const exported = await (await get("me/export", cookieNamed(ok, "perepev_session"))).json();
     assert.deepEqual(exported.age, { group: "under14", parent_name: "Мария Иванова" });
     assert.deepEqual(exported.identities, []);

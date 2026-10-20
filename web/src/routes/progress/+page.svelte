@@ -11,10 +11,16 @@
   import Decor from "#lib/brand/Decor.svelte";
   import Cat from "#lib/brand/Cat.svelte";
   import Asset from "#lib/brand/Asset.svelte";
-  type MatchItem = { id: string; kind: string; state: string; songId: string; outcome: string | null; score: number | null; at: string | null };
+  import { loadCatalog } from "#lib/catalog.ts";
+  type MatchItem = { id: string; kind: string; mode?: string; state: string; songId: string; outcome: string | null; score: number | null; at: string | null; result?: { team?: { score?: number | null } | null } | null };
   let showHistory = $state(false);
   let attempts = $state<Attempt[]>([]), matches = $state<MatchItem[]>([]);
   let historyError = $state(""), loading = $state(true);
+  // Названия песен для дуэлей в истории (сервер отдаёт id песни).
+  let titles = $state<Record<string, string>>({});
+  $effect(() => {
+    loadCatalog().then((list) => (titles = Object.fromEntries(list.map((e) => [e.id, e.title])))).catch(() => {});
+  });
   $effect(() => {
     const id = account.profile?.id;
     if (!account.loaded) return;
@@ -56,15 +62,18 @@
 </script>
 <svelte:head><title>Мой прогресс — Перепев</title></svelte:head>
   <div class="cabinet">
-    <div class="cabinet-switch" role="group" aria-label="Раздел кабинета"><button class="key" aria-pressed={!showHistory} onclick={() => showHistory = false}>Мой прогресс</button><button class="key" aria-pressed={showHistory} onclick={() => showHistory = true}>История исполнений</button><a class="settings-link" href="/account">Настройки аккаунта ↗</a></div>
+    <!-- Шапка кабинета: ярлык на том же месте, что на других страницах, имя рядом, переключатель справа. -->
+    <header class="cabinet-head">
+      <TitleStrip text="Мой прогресс" tag="div" fastener="paperclip" />
+      <div class="progress-name"><h1>{account.profile?.name ?? "Твой прогресс"}</h1><span class="small">{account.rating?.calibrating ? `${songCount} ${plural(songCount, ["песня", "песни", "песен"])} · ${attempts.length} ${plural(attempts.length, ["попытка", "попытки", "попыток"])}` : account.rating?.rank ?? "Твоя музыкальная тетрадь"}</span></div>
+      <div class="cabinet-switch"><div class="segmented" role="group" aria-label="Раздел кабинета"><button aria-pressed={!showHistory} onclick={() => showHistory = false}>Мой прогресс</button><button aria-pressed={showHistory} onclick={() => showHistory = true}>История исполнений</button></div><a class="settings-link" href="/account">Настройки аккаунта →</a></div>
+    </header>
     {#if loading}<p class="load-state" role="status">Загружаем историю…</p>{/if}
     {#if historyError && !showHistory}<p class="notice error" role="alert">{historyError}</p>{/if}
     <!-- Расстановка повторяет мокап «Мой прогресс»: разворот тетради с графиком и достижениями. -->
     <section class="scene progress" aria-label="Мой прогресс" hidden={showHistory}>
-      <div class="at" style:--x="5%" style:--y="3%"><TitleStrip text="Мой прогресс" tag="div" fastener="paperclip" /></div>
-      <div class="at progress-name" style:--x="67%" style:--y="4%"><h1>{account.profile?.name ?? "Твой прогресс"}</h1><span class="small">{account.rating?.calibrating ? `${songCount} ${plural(songCount, ["песня", "песни", "песен"])} · ${attempts.length} ${plural(attempts.length, ["попытка", "попытки", "попыток"])}` : account.rating?.rank ?? "Твоя музыкальная тетрадь"}</span></div>
-      <span class="at progress-cat" style:--x="82%" style:--y="77%" style:--w="11%" aria-hidden="true"><Cat mood="happy" size="100%" /></span>
-      <div class="at spread" style:--x="4%" style:--y="17%" style:--w="92%">
+      <span class="at progress-cat" style:--x="83%" style:--y="74%" style:--w="11%" aria-hidden="true"><Cat mood="happy" size="100%" /></span>
+      <div class="at spread" style:--x="4%" style:--y="7%" style:--w="92%">
         <span class="notebook-clip" aria-hidden="true"><Asset name="hardware/binder-clip-s03" /></span>
         <div class="page left">
           <div class="chart">
@@ -83,7 +92,20 @@
                 {/each}
               </svg>
             {:else}
-              <p class="chart-empty">Здесь появится график, когда попыток станет две и больше.</p>
+              <!-- Пустой график: оси 0–100 бледно (без точек), подпись и действие — не одна фраза на целой странице. -->
+              <div class="chart-empty">
+                <svg viewBox="0 0 {W} {H}" aria-hidden="true">
+                  {#each [0, 25, 50, 75, 100] as v (v)}
+                    <line x1="40" x2={W - 20} y1={py(v)} y2={py(v)} class="grid" />
+                    <text x="32" y={py(v) + 4} text-anchor="end" class="axis">{v}</text>
+                  {/each}
+                </svg>
+                <div class="chart-empty-text">
+                  <p class="chart-empty-title">Здесь появится график, когда попыток станет две и больше.</p>
+                  <p class="small">Каждая точка — балл одной попытки от 0 до 100: видно, растёт ли он от раза к разу.</p>
+                  <a class="btn btn-primary" href="/songs">{attempts.length ? "Спеть ещё раз" : "Спеть первую песню"}</a>
+                </div>
+              </div>
             {/if}
           </div>
         </div>
@@ -95,7 +117,7 @@
               <li class:got={a.got} aria-label="{a.label}: {a.got ? 'получено' : 'ещё не получено'}">
                 <span class="sticker" aria-hidden="true">
                   {#if a.icon === "star"}<Star variant="patch" size="100%" />
-                  {:else if a.icon === "tape"}<Cassette label="mix" tone="black" width={90} />
+                  {:else if a.icon === "tape"}<Cassette label="микс" tone="black" width={90} />
                   {:else if a.icon === "cat"}<Cat mood="happy" size="100%" />
                   {:else if a.icon === "mic"}<Decor kind="micstand" width="40%" />
                   {:else if a.icon === "vs"}<Star variant="spiral" size="100%" />
@@ -132,8 +154,13 @@
           <ul>
             {#each matches as m (m.id)}
               <li>
-                <span>{m.kind === "rated" ? "Рейтинговая" : "С другом"}, {m.songId}</span>
-                <span>{m.state === "finished" ? outcomeText[m.outcome ?? ""] ?? "" : m.state === "cancelled" ? "Отменена" : "Сбой, без результата"}{m.score != null ? `, ${m.score.toFixed(1)}` : ""}</span>
+                <span>{m.kind === "rated" ? "Рейтинговая" : m.mode === "coop" ? "Вместе с другом" : "С другом"}, {titles[m.songId] ?? m.songId}</span>
+                {#if m.mode === "coop"}
+                  <!-- «Вместе»: без победы и поражения — общий балл и своя партия. -->
+                  <span>{m.state === "finished" ? `Общий ${m.result?.team?.score != null ? m.result.team.score.toFixed(1) : "—"}${m.score != null ? `, твоя партия ${m.score.toFixed(1)}` : ""}` : m.state === "cancelled" ? "Отменена" : "Сбой, без результата"}</span>
+                {:else}
+                  <span>{m.state === "finished" ? outcomeText[m.outcome ?? ""] ?? "" : m.state === "cancelled" ? "Отменена" : "Сбой, без результата"}{m.score != null ? `, ${m.score.toFixed(1)}` : ""}</span>
+                {/if}
                 <span class="small muted mono">{date(m.at)}</span>
               </li>
             {/each}
@@ -198,7 +225,7 @@
   .spread {
     display: grid;
     grid-template-columns: 1fr 18px 1fr;
-    height: 66%;
+    height: 72%;
     filter: drop-shadow(0 16px 22px rgb(0 0 0 / 0.7));
     rotate: -0.5deg;
   }
@@ -260,11 +287,31 @@
     stroke-width: 2;
   }
   .chart-empty {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+  .chart-empty svg {
+    grid-area: 1 / 1;
+    width: 100%;
+    opacity: 0.55;
+  }
+  .chart-empty-text {
+    grid-area: 1 / 1;
+    display: grid;
+    justify-items: center;
+    gap: var(--s-3);
+    max-width: 26rem;
+    padding: var(--s-4) var(--s-5);
+    background: color-mix(in srgb, var(--paper-2) 90%, transparent);
+    text-align: center;
+    color: var(--ink-2);
+  }
+  .chart-empty-title {
+    color: var(--ink);
     font-family: var(--font-hand);
     font-size: clamp(1.2rem, 1.6cqi, 2rem);
     font-weight: 600;
-    text-align: center;
-    color: var(--ink-2);
   }
   .ach-title {
     display: inline-block;
@@ -287,6 +334,7 @@
   }
   .ach li {
     display: grid;
+    align-content: start;
     justify-items: center;
     gap: var(--s-1);
     text-align: center;
@@ -295,8 +343,13 @@
     position: relative;
     display: grid;
     place-items: center;
-    width: clamp(56px, 6cqi, 110px);
+    /* Не выше 9 % окна: на коротком окне (масштаб 150 %) достижения помещаются в тетрадь. */
+    width: clamp(48px, min(6cqi, 9svh), 110px);
     aspect-ratio: 1;
+    /* Значок любой формы (кассета шире звезды) вписан в один квадрат: подписи всех достижений
+       стоят на одной линии. */
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+    min-height: 0;
   }
   .ach li:not(.got) .sticker > :global(*:not(.lock)) {
     filter: grayscale(1) brightness(0.8);
@@ -334,8 +387,10 @@
     font-weight: 700;
   }
   .cabinet { padding-bottom: 0; height: calc(100svh - var(--chrome)); display: grid; grid-template-rows: auto minmax(0,1fr); gap: 8px; }
-  .cabinet-switch { display: flex; gap: 6px; justify-content: flex-end; }
+  .cabinet-head { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3) var(--s-6); padding: var(--title-top) 2% 0; }
+  .cabinet-switch { display: flex; gap: 6px var(--s-3); align-items: center; margin-left: auto; }
   .progress { height: 100%; }
+  .progress-name { display: grid; }
   .progress-name h1 { font: 700 1.7rem/1.1 var(--font-hand); }
   .progress-name .small { color: var(--on-room-2); }
   .progress-cat { z-index: 2; }
@@ -355,6 +410,7 @@
     --muted: var(--ink-2);
   }
   .history {
+    align-content: start;
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -471,7 +527,13 @@
   .load-state { position: absolute; top: 80px; z-index: 2; }
   .history h2 { font: 700 1.6rem/1.1 var(--font-hand); margin: 4px 0; }
   .list { max-height: none; }
-  .cabinet-switch { flex-wrap: wrap; align-items: center; }
+  .cabinet-switch { flex-wrap: wrap; }
+  /* Короткое широкое окно: страницы тетради плотнее. */
+  @media (min-width: 1100px) and (min-height: 521px) and (max-height: 720px) {
+    .page { padding: var(--s-3) var(--s-4); }
+    .ach-title { margin-bottom: var(--s-2); }
+    .ach { gap: var(--s-2) var(--s-4); }
+  }
   /* Сенсорный экран или не wide: ссылка на настройки не ниже 44 px. */
   @media (pointer: coarse), not all and (min-width: 1100px) and (min-height: 521px) {
     .settings-link { display: inline-flex; align-items: center; min-height: var(--tap); }
@@ -479,7 +541,9 @@
   /* Не wide: разворот тетради в одну колонку, страница прокручивается. */
   @media not all and (min-width: 1100px) and (min-height: 521px) {
     .cabinet { height: auto; } .progress { height: auto; }
-    .progress-name { order: -1; } .progress-cat { display: none; }
+    .cabinet-head { padding-inline: 0; }
+    .progress-cat { display: none; }
+    .cabinet-switch { margin-left: 0; }
     .details, .spread { grid-template-columns: 1fr; } .spread { width: 100%; height: auto; }
     .spine { display: none; } .profile, .history { overflow: visible; }
     .list li { grid-template-columns: 1fr auto; gap: 8px; }

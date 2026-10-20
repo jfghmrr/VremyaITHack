@@ -54,4 +54,6 @@
   @media(prefers-reduced-motion:reduce){.achievement-toast{animation:none}}
   /* Сенсорный экран: крестик и звук не меньше 44 px, над полоской «домой». */
   @media (pointer: coarse){.toast-region{bottom:calc(16px + var(--safe-bottom));right:calc(16px + var(--safe-right))}.achievement-toast{padding:18px 48px 48px 18px}.close,.sound{min-width:44px;min-height:44px}.close{right:0;top:0}.sound{right:2px;bottom:2px}}
+  /* Телефон с нижним меню: достижение над ним (--bar-space задаёт routes/+layout.svelte). */
+  @media (max-width: 599px), (max-width: 799px) and (min-height: 521px){.toast-region{bottom:calc(16px + var(--bar-space, var(--safe-bottom)))}}
 </style>

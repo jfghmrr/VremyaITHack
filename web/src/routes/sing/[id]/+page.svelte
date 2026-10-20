@@ -25,18 +25,27 @@
   import Decor from "#lib/brand/Decor.svelte";
   import Asset from "#lib/brand/Asset.svelte";
   import Cat, { type CatSignal } from "#lib/brand/Cat.svelte";
+  import { wideLayout } from "#lib/brand/art.ts";
   import Clip from "#lib/brand/Clip.svelte";
   import { tick } from "svelte";
   import { reducedMotion } from "#lib/ui/canvas.ts";
   import { modified, typing } from "#lib/ui/keys.ts";
   import { acquireWakeLock } from "#lib/ui/wakelock.ts";
+  import { count, SECONDS, sec } from "#lib/ui/format.ts";
+  import Cover from "#lib/ui/Cover.svelte";
+  import type { CatalogEntry } from "#lib/catalog.ts";
 
   import { parseWordTiming, wordProgress, isCurrentWord, type WordTiming } from "#lib/lyrics.ts";
+  // Кот проверки микрофона и сцены виден только в раскладке wide: там он над сгибом и грузится сразу,
+  // на телефоне скрыт и не скачивается.
+  const catLoading = wideLayout() ? "eager" : "lazy";
 
   let wordTiming = $state<WordTiming | null>(null);
   type Phase = "mic" | "sing" | "scoring";
 
   let song = $state<Song | null>(null);
+  // Карточка песни на телефоне: обложка из каталога (у своего трека её может не быть).
+  let entry = $state<CatalogEntry | null>(null);
   let preview = $state<string | null>(null);
   let hasVocals = $state(false);
   let phase = $state<Phase>("mic");
@@ -45,14 +54,30 @@
   let error = $state("");
   let level = $state(0);
   let voiced = $state(false);
+  // Усиление анализа для тихого певца (level.ts): ×1, пока проверка не замерила протяжную ноту.
+  // Индикатор показывает настоящий уровень входа.
+  let boost = $state(1);
   let paused = $state(false);
   let exitOpen = $state(false);
   let clock = $state(-3);
   let useRecord = $state(false);
-  let ghost = $state<Ghost | null>(null);
-  let ghostResult = $state<ScoreResult | null>(null);
+  // compact: выбор входа спрятан за «Настройки звука» — обычно подходит системный микрофон. Блок
+  // раскрывается сам, когда сохранённый микрофон не подключён или список устройств не получен,
+  // и остаётся раскрытым после выбора рабочего входа: свернуть его может только кнопка.
+  let soundSettingsOpen = $state(false);
+  const micProblem = $derived(!!mics.error || (!!mics.selected && !mics.devices.some((d) => d.deviceId === mics.selected)));
+  $effect(() => {
+    if (micProblem) soundSettingsOpen = true;
+  });
+  // Без глубокого прокси ($state.raw): присвоенный объект остаётся тем же, проверка
+  // «ghost === next» после оценки срабатывает, и пунктир призрака появляется на графике.
+  // С обычным $state ghost становился прокси, сравнение всегда было ложным (owner, скрин 18).
+  let ghost = $state.raw<Ghost | null>(null);
+  let ghostResult = $state.raw<ScoreResult | null>(null);
   // Точная оценка: отдельные дорожки песни, режим звука и согласие на запись голоса.
   let stems = $state(false);
+  // Проверяет ли сервер слова этой песни: у трёх старинных песен распознавание их не слышит.
+  let wordsCheck = true;
   let mode = $state<PlayMode>("headphones");
   // Совет перед пением зависит от режима звука: в «Без наушников» не просим надеть наушники,
   // если звучит только минус.
@@ -130,9 +155,11 @@
       .then(async ([s, list]) => {
         song = s;
         const info = entryFor(s.id, list);
+        entry = info ?? null;
         preview = info?.preview ?? null;
         hasVocals = info?.hasVocals === true;
         stems = info?.stems === true;
+        wordsCheck = info?.wordsCheck !== false;
         if (info?.wordTiming) {
           try {
             const response = await fetch(asset(s.id, info.wordTiming));
@@ -215,7 +242,7 @@
     error = "";
     trace.length = 0;
     try {
-      const mic = await Capture.open((f) => {
+      const mic = await Capture.open((f, gain) => {
         const now = performance.now();
         trace.push({ at: now / 1000, midi: f.midi });
         live.rms = f.rms ?? 0;
@@ -226,6 +253,7 @@
           lastUi = now;
           level = Math.min(100, (f.rms ?? 0) * 600);
           voiced = f.midi !== null;
+          boost = gain;
         }
       }, deviceId, { echoCancellation: mode === "speaker" });
       if (t !== ticket) {
@@ -233,6 +261,8 @@
         return;
       }
       capture = mic;
+      // Проверка микрофона замеряет ноту певца; с началом попытки порог фиксируется (start()).
+      mic.measure(!audioPreview || audioPreview.paused);
       mic.stream.getAudioTracks()[0]?.addEventListener("ended", () => {
         if (capture !== mic) return;
         clean();
@@ -284,8 +314,11 @@
     const s = song;
     error = "";
     paused = false;
+    // Фрагмент песни с проверки микрофона не должен звучать в отсчёте и в самой песне.
+    audioPreview?.pause();
     void mic.ctx.resume();
     startAt = mic.ctx.currentTime + 3;
+    mic.measure(false);
     mic.begin(startAt, s.duration_s);
     frames = mic.frames;
     clock = -3;
@@ -316,6 +349,10 @@
   }
 
   async function finish(mic: Capture, s: Song) {
+    // Детектор отдаёт кадр с задержкой 30 мс: забрать последние кадры попытки (capture.ts, flush).
+    const t = ticket;
+    await mic.flush();
+    if (t !== ticket) return;
     const recording = mic.recording();
     const taken = [...mic.frames];
     const buffer = backing;
@@ -330,7 +367,7 @@
       const curve = canonical(taken, s.duration_s);
       curve.catch(() => {});
       // В историю и рекорд идёт окончательный балл: точный или браузерный, если слова не проверены.
-      settle(s, result, session, (final) => void curve.then((c) => rememberBest(s.id, final.score, c)).catch(() => {}), mode);
+      settle(s, result, session, (final) => void curve.then((c) => rememberBest(s.id, final.score, c)).catch(() => {}), mode, wordsCheck);
       await goto("/result");
     } catch (e) {
       session?.cancel();
@@ -339,25 +376,51 @@
     }
   }
 
+  /**
+   * Быстрый рестарт: та же песня с начала, без проверки микрофона. AudioContext и поток
+   * микрофона остаются прежними; минус, кадры, запись и отправка на точную оценку начинаются
+   * заново: прежняя сессия отменяется, новая открывается только с согласием (как в start()).
+   */
+  function restart() {
+    const mic = capture;
+    if (phase !== "sing" || !mic) return;
+    ticket++;
+    cancelAnimationFrame(raf);
+    playing?.stop();
+    playing = null;
+    mic.onPcm = null;
+    perf?.cancel();
+    perf = null;
+    releaseWake?.();
+    releaseWake = null;
+    exitOpen = false;
+    start();
+  }
+
   async function setPause(value: boolean) {
     const mic = capture;
     if (!mic) return;
+    // Перезапуск (R сразу после Пробела) или выход меняют ticket: запоздалая пауза прежней
+    // попытки не ложится поверх новой.
+    const t = ticket;
     try {
       // Приостанавливается общий AudioContext: минусовка и захват, временная шкала не сдвигается.
       if (value) await mic.ctx.suspend();
       else await mic.ctx.resume();
+      if (t !== ticket) return;
       clock = mic.ctx.currentTime - startAt;
       paused = value;
     } catch {
-      error = "Не удалось переключить паузу. Начни попытку заново.";
+      if (t === ticket) error = "Не удалось переключить паузу. Начни попытку заново.";
     }
   }
 
   async function requestExit() {
     if (phase !== "sing") return void goto("/songs");
     resumeAfterDialog = !paused;
+    const t = ticket;
     await setPause(true);
-    exitOpen = true;
+    if (t === ticket) exitOpen = true;
   }
 
   function onkeydown(e: KeyboardEvent) {
@@ -368,6 +431,11 @@
       return;
     }
     if (typing(e)) return;
+    if (phase === "sing" && (e.key.toLowerCase() === "r" || e.key.toLowerCase() === "к")) {
+      e.preventDefault();
+      restart();
+      return;
+    }
     if (e.code === "Space" && (phase === "sing" || (phase === "mic" && ready && !busy))) {
       e.preventDefault();
       if (phase === "sing") void setPause(!paused);
@@ -387,13 +455,30 @@
       return;
     }
     audioPreview = new Audio(asset(song.id, preview));
+    // Запись песни из динамика — не голос певца: пока она звучит, нота не замеряется.
+    const resumeMeasure = () => capture?.measure(phase === "mic");
+    audioPreview.addEventListener("pause", resumeMeasure);
+    audioPreview.addEventListener("ended", resumeMeasure);
+    capture?.measure(false);
     try {
       await audioPreview.play();
     } catch {
+      resumeMeasure();
       error = "Не удалось воспроизвести запись.";
     }
   }
 
+  // Карточка микрофона на телефоне (макет владельца): состояние и шкала уровня с числом. Текст
+  // для экранного чтения даёт строка состояния в списке проверок (role="status"), здесь — только вид.
+  const micTitle = $derived(ready ? "Микрофон включён" : busy ? "Подключаем микрофон…" : error ? "Микрофон недоступен" : "Микрофон выключен");
+  // Тихий, но ясный голос распознаётся с усилением после замера ноты; громкость входа на индикаторе не меняется.
+  const boosted = $derived(boost >= 1.3);
+  const levelText = $derived(
+    !ready ? "ещё не проверен" : level > 6 ? "нормальный" : boosted ? `тихий — для распознавания сайт усиливает его в ${boost.toFixed(1).replace(".", ",")} раза` : "слишком тихо",
+  );
+  // Формулировки короче строки состояния и не совпадают с ней: карточка скрыта на компьютере, но
+  // остаётся в разметке, и одинаковый текст путал бы поиск по тексту (и экранное чтение не нужно).
+  const micNote = $derived(ready ? (voiced ? "Голос есть — можно петь" : level > 6 ? "Звук есть — спой протяжную ноту" : "Тихо — спой громче или проверь вход") : busy ? "Разреши доступ, если браузер спросит" : error ? "Проверь разрешение и вход в «Настройках звука»" : "Доступ ещё не запрошен");
   const status = $derived(
     !ready
       ? "Разреши доступ к микрофону, чтобы проверить сигнал."
@@ -414,27 +499,38 @@
     {#if error}<p class="notice error" role="alert">{error} <a href="/songs">К песням</a></p>{:else}<p class="muted">Загружаем песню…</p>{/if}
   </div>
 {:else if phase === "mic"}
-  <section class="scene check" aria-labelledby="check-title">
+  <section class="scene check" class:tall={needsConsent || !!error} aria-labelledby="check-title">
     <header class="check-heading"><TitleStrip text="Проверка микрофона" id="check-title" fastener="binder" /><a class="back" href="/songs">← Другая песня</a></header>
-    <div class="mic-layout">
+    <div class="mic-layout" class:settings-open={soundSettingsOpen}>
       <div class="mic-left">
-        <div class="song-ticket"><span>Сейчас споём</span><h2>{song.title}</h2><span class="mono">{Math.round(song.duration_s)} секунд</span></div>
+        <div class="song-ticket"><span class="ticket-cover" aria-hidden="true">{#if entry}<Cover id={entry.id} title={entry.title} contour={entry.contour} />{/if}</span><span class="ticket-eyebrow">Сейчас споём</span><h2>{song.title}</h2><span class="mono">{count(Math.round(song.duration_s), SECONDS)}</span><span class="ticket-artist">{song.artist.split(" · ")[0]} · {sec(song.duration_s)}</span></div>
         <div class="ask sheet"><span class="ask-clip" aria-hidden="true"><Asset name="hardware/paperclip-s02" width={23} /></span><p>Скажи что-нибудь в микрофон, чтобы мы проверили звук.</p></div>
         {#if error}<div class="notice error mic-error" role="alert"><span>{error}</span><button aria-label="Закрыть предупреждение" onclick={() => error = ""}>×</button></div>{/if}
         <PlayModeSwitch {mode} {stems} disabled={busy} onchange={changeMode} />
+        <!-- Телефон: карточка микрофона вместо индикатора и списка проверок (они — в «Настройках звука»). -->
+        <div class="mic-card sheet" aria-hidden="true">
+          <svg class="mic-icon" viewBox="0 0 48 48"><rect x="17.5" y="5.5" width="13" height="23" rx="6.5" /><path d="M11.6 22.4c0 7.4 5.4 12.6 12.4 12.6s12.4-5.2 12.4-12.6M24 35.2v6.3M16.6 41.8h14.8" /></svg>
+          <span class="mic-text"><b>{micTitle}</b><span>{micNote}</span></span>
+          <span class="mic-bars"><span class="bars">{#each Array.from({ length: 12 }, (_, i) => i) as i (i)}<i class:on={ready && level > i * 8.4} style:height="{34 + i * 6}%"></i>{/each}</span><span class="mic-num mono">{ready ? Math.round(level) : 0}</span></span>
+        </div>
         {#if needsConsent}<VoiceConsent {busy} onaccept={acceptConsent} ondecline={declineConsent} />{/if}
-        <div class="check-cat"><Cat mood={error && !ready ? "unplugged" : "listening"} size="100%" signal={ready ? catSignal : undefined} /></div>
+        {#if !needsConsent}<div class="check-cat"><Cat mood={error && !ready ? "unplugged" : "listening"} size="100%" signal={ready ? catSignal : undefined} loading={catLoading} /></div>{/if}
       </div>
       <div class="mic-right">
         <div class="device"><span class="clip"><Clip size={20} rotate={8} /></span><div class="meter-wrap"><LedMeter value={ready ? level : 0} /></div><div class="trace" class:idle={!ready}><LiveTrace points={trace} />{#if !ready}<span>Здесь появится линия голоса</span>{/if}</div></div>
     <div class="checklist sheet">
       <ul>
         <li class:ok={ready}>Микрофон подключён</li>
-        <li class:ok={ready && level > 6}>Уровень звука: {!ready ? "ещё не проверен" : level > 6 ? "нормальный" : "слишком тихо"}</li>
+        <li class="level" class:ok={ready && (level > 6 || boosted)}>Уровень звука: {levelText}</li>
         <li class:ok={ready && voiced}>Можно начинать!</li>
         <li class="tip">{tip}</li>
       </ul>
       <p class="status" role="status">{status}</p>
+      <button class="settings-toggle" type="button" aria-expanded={soundSettingsOpen} aria-controls="mic-settings" onclick={() => (soundSettingsOpen = !soundSettingsOpen)}>
+        Настройки звука
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={soundSettingsOpen ? "M6 15l6-6 6 6" : "M6 9l6 6 6-6"} /></svg>
+      </button>
+      <div class="mic-settings" id="mic-settings" class:collapsed={!soundSettingsOpen}>
       <label class="field mic">
         <span>Устройство ввода</span>
         <select
@@ -456,6 +552,7 @@
         </select>
       </label>
       {#if mics.error}<p class="small" role="status">{mics.error}</p>{/if}
+      </div>
     </div><div class="check-actions">    <div class="extras">
       {#if ghost}
         <p class="ghost-note"><span class="dash" aria-hidden="true"></span>Против призрака: {ghost.name}{ghostResult ? `, ${ghostResult.score.toFixed(1)}` : ""}</p>
@@ -469,7 +566,7 @@
       {#if !needsConsent}<button class="btn btn-primary go" disabled={busy} onclick={() => (ready ? start() : void enableMic())}>{busy ? "Подключаем…" : ready ? "Начать пение" : "Включить микрофон"} <span aria-hidden="true">→</span></button>{/if}
       </div></div>
     </div>
-    <p class="keys"><span><kbd>Enter</kbd> подтвердить</span><span><kbd>Пробел</kbd> начать</span><span><kbd>Esc</kbd> к песням</span>{#if mode === "headphones"}<span>Надень наушники перед записью.</span>{/if}</p>
+    <p class="keys"><span><kbd>Enter</kbd> подтвердить</span><span><kbd>Пробел</kbd> начать</span><span><kbd>Esc</kbd> к песням</span></p>
   </section>
 {:else}
   <!-- Расстановка повторяет мокап «Поем!». -->
@@ -491,7 +588,7 @@
       </ol>
       <span class="rings" aria-hidden="true"></span>
     </div>
-    <span class="at deco" style:--x="56%" style:--y="10%" style:--w="27%"><Cat mood={paused ? "idle" : "singing"} size="100%" signal={catSignal}  /></span>
+    <span class="at deco" style:--x="56%" style:--y="10%" style:--w="27%"><Cat mood={paused ? "idle" : "singing"} size="100%" signal={catSignal} loading={catLoading} /></span>
     <span class="at deco" style:--x="53%" style:--y="30%" style:--w="3%"><Decor kind="notes" width="100%" /></span>
     <span class="at deco" style:--x="85%" style:--y="38%" style:--w="3%" style:--r="12deg"><Decor kind="notes" width="100%" /></span>
     <div class="at stage-note" style:--x="83%" style:--y="12%" style:--w="13%" style:--r="3deg"><span class="note-clip" aria-hidden="true"><Asset name="hardware/paperclip-s02" width={20} /></span><span class="rec-label"><i class:paused></i>{paused ? "ПАУЗА" : "НА ЗАПИСИ"}</span><p>Твой голос.<br />Твоя тональность.</p></div>
@@ -509,9 +606,12 @@
       </div>
       <div class="controls">
         <span class="time mono" aria-live="off">{clockText(Math.max(0, clock))} / {clockText(song.duration_s)}</span>
-        <span class="small hint"><kbd>Пробел</kbd> пауза <kbd>Esc</kbd> выход</span>
+        <span class="small hint"><span><kbd>Пробел</kbd> пауза</span> <span><kbd>R</kbd> заново</span> <span><kbd>Esc</kbd> выход</span></span>
         <button class="round" aria-label={paused ? "Продолжить" : "Пауза"} aria-pressed={paused} disabled={phase !== "sing"} onclick={() => void setPause(!paused)}>
           {#if paused}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5l11 7-11 7z" /></svg>{:else}<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>{/if}
+        </button>
+        <button class="round" aria-label="Начать заново" title="Начать песню заново (R)" disabled={phase !== "sing"} onclick={restart}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5a7 7 0 1 1-6.6 4.7l1.9.6A5 5 0 1 0 12 7v3L7.5 6 12 2z" /></svg>
         </button>
         <button class="round" aria-label="Выйти" onclick={() => void requestExit()}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6h12v12H6z" /></svg>
@@ -544,10 +644,15 @@
 />
 
 <style>
-  .check { display: grid; grid-template-rows: auto minmax(0,1fr) auto; gap: 22px; padding: 22px 4% 8px; }
+  .check { display: grid; grid-template-rows: auto minmax(0,1fr) auto; gap: 22px; padding: var(--title-top) 2% 8px; }
+  /* С карточкой согласия или ошибкой проверка микрофона растёт вместе с содержимым: подсказки
+     клавиш всегда под ним, а не под кнопками согласия (правка P9). */
+  @media (min-width: 1100px) and (min-height: 521px) {
+    .check.tall { grid-template-rows: auto auto auto; height: auto; min-height: calc(100svh - var(--chrome)); }
+  }
   .check-heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
   .mic-layout { display: grid; grid-template-columns: .9fr 1.1fr; gap: 70px; min-height: 0; align-items: center; }
-  .mic-left { display: flex; flex-direction: column; gap: 16px; min-height: 0; height: 100%; padding-top: 10px; }
+  .mic-left { display: flex; flex-direction: column; gap: 16px; min-height: 0; height: 100%; }
   .song-ticket { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; border-left: 3px solid #a63830; padding-left: 16px; }
   .song-ticket h2 { font: 700 29px/1.1 var(--font-hand); grid-column: 1/-1; grid-row: 2; }
   .song-ticket > span { font-size: 11px; color: var(--on-room-2); }
@@ -571,7 +676,14 @@
   .past .done-word { color: var(--ink-2); }
 
   .loading {
+    /* Высота сцены: пока песня загружается, подвал не заезжает в первый экран и потом не прыгает. */
+    min-height: calc(100svh - var(--chrome));
     padding-top: var(--s-8);
+  }
+  /* compact: шапка в одну строку ниже --chrome, а проверка микрофона на телефоне всегда длиннее
+     экрана — подвал и во время загрузки за первым экраном. */
+  @media (max-width: 599px) {
+    .loading { min-height: 100svh; }
   }
 
   .back {
@@ -657,6 +769,13 @@
   .mic select {
     min-height: 32px;
     font-size: var(--t-xs);
+  }
+  .settings-toggle {
+    display: none;
+  }
+  .mic-settings {
+    display: grid;
+    gap: var(--s-2);
   }
   .extras {
     display: grid;
@@ -834,7 +953,10 @@
     align-items: center;
     gap: var(--s-3);
   }
+  /* Время, подсказки и три клавиши в один ряд: клавиши и время не сжимаются, подсказки — да. */
   .time {
+    flex: none;
+    white-space: nowrap;
     padding: 4px 10px;
     border-radius: 3px;
     background: #0f0e0f;
@@ -842,11 +964,19 @@
     box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.8);
   }
   .hint {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2px 10px;
+    min-width: 0;
     margin-right: auto;
     color: var(--on-room-2);
   }
+  .hint > span {
+    white-space: nowrap;
+  }
   /* Круглые клавиши плеера: нажатая утоплена. */
   .round {
+    flex: none;
     display: grid;
     place-items: center;
     width: 52px;
@@ -945,14 +1075,19 @@
   }
   /* Сенсорный экран или не wide: цели нажатия на проверке микрофона не меньше 44 px. */
   @media (pointer: coarse), not all and (min-width: 1100px) and (min-height: 521px) {
+    .stage .time { margin-right: auto; }
     .back { display: inline-flex; align-items: center; min-height: var(--tap); }
     .mic select { min-height: var(--tap); height: var(--tap); }
     .mic-error button { min-width: var(--tap); height: var(--tap); }
     .record { min-height: var(--tap); }
   }
+  /* Подсказки клавиатуры на сенсорном экране не нужны: место клавишам плеера. */
+  @media (pointer: coarse) {
+    .stage .hint { display: none; }
+  }
   /* Не wide: проверка микрофона идёт потоком, «Начать пение» сразу под индикатором. */
   @media not all and (min-width: 1100px) and (min-height: 521px) {
-    .check { display: grid; height: auto; gap: var(--s-4); padding: var(--s-4) 0 0; }
+    .check { display: grid; height: auto; gap: var(--s-4); padding: var(--title-top) 0 0; }
     .check-heading { align-items: flex-start; flex-wrap: wrap; }
     .mic-layout { grid-template-columns: minmax(0, 1fr); gap: var(--s-5); }
     .mic-left { height: auto; padding-top: 0; }
@@ -975,6 +1110,23 @@
     .mic-left { gap: var(--s-3); }
     .ask { padding: var(--s-2) var(--s-3); }
     .device { height: clamp(88px, 13vh, 112px); }
+    .settings-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      justify-self: start;
+      min-height: var(--tap);
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--ink);
+      font: 600 var(--t-s) / 1 var(--font);
+      text-decoration: underline;
+      text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+      text-underline-offset: 3px;
+    }
+    .settings-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .mic-settings.collapsed { display: none; }
   }
   /* Телефон: подсказки клавиатуры не нужны; на сцене строки песни мельче, чтобы меньше переносились. */
   @media (max-width: 599px), (max-height: 520px) and (orientation: landscape) {
@@ -1010,8 +1162,14 @@
     .stage .legend { grid-row: 2; gap: 2px var(--s-4); font-size: 0.72rem; }
     .stage .player { grid-row: 3; height: auto; min-height: 0; gap: var(--s-2); padding: 8px 8px max(8px, var(--safe-bottom)); border-radius: 14px 14px 0 0; }
     .screen { min-height: 0; height: clamp(150px, 30dvh, 360px); }
-    .stage-note, .hint { display: none; }
+    .stage-note { display: none; }
     .stage .time { margin-right: auto; }
+    /* Окно с мышью, но узкое или низкое: подсказки клавиш (Пробел, R, Esc) показываем, пока им хватает
+       места в ряду плеера; в узком ряду они скрыты, время и три клавиши 52×52 не сжимаются. */
+    .stage .controls { container-type: inline-size; }
+    @container (max-width: 520px) {
+      .hint { display: none; }
+    }
   }
   /* Ландшафт телефона (short) и планшета: строки песни слева (55 %), справа легенда,
      график и клавиши. */
@@ -1037,5 +1195,86 @@
     .stage .book-title :global(.text) { font-size: 1.35rem; }
     .stage .book-title :global(.strip) { padding: 8px 22px 12px; }
     .stage .book-title :global(.star) { display: none; }
+  }
+
+  /* Обложка, исполнитель и карточка микрофона — только на телефоне. */
+  .ticket-cover,
+  .ticket-artist,
+  .mic-card {
+    display: none;
+  }
+  /* Телефон (PHONE_QUERY, макет владельца, экран 03): карточка песни с обложкой, «В наушниках /
+     Без наушников», карточка микрофона со шкалой, согласие или «Включить микрофон», совет и
+     строка «Настройки звука» — под ней выбор входа, индикатор и линия голоса. */
+  @media (max-width: 599px), (max-width: 799px) and (min-height: 521px) {
+    /* Не короче экрана под шапкой: подвал за первым экраном и пока песня загружается, и после —
+       он не прыгает вверх (страница «Загружаем песню…» высотой в экран). */
+    .check { gap: var(--s-2); align-content: start; min-height: calc(100svh - 60px - var(--safe-top)); }
+    .check-heading .back,
+    .ask,
+    .keys,
+    .checklist li:not(.tip, .level) { display: none; }
+    .mic-layout,
+    .mic-left,
+    .mic-right { gap: 10px; }
+    .mic-right { display: flex; flex-direction: column; }
+    .song-ticket {
+      display: grid;
+      grid-template-columns: 56px minmax(0, 1fr);
+      grid-template-areas: "cover title" "cover artist";
+      align-content: center;
+      gap: 2px var(--s-4);
+      padding: 10px var(--s-3);
+      border: 0;
+      background: var(--paper-2) var(--tex-paper);
+      color: var(--ink);
+      box-shadow: var(--shadow-sheet);
+    }
+    .song-ticket > .ticket-eyebrow,
+    .song-ticket > .mono { display: none; }
+    .ticket-cover { display: block; grid-area: cover; width: 56px; aspect-ratio: 1; container-type: inline-size; --cover-fs: 12cqi; background: var(--sunken); }
+    .song-ticket h2 { grid-area: title; align-self: end; font: 700 var(--t-xl)/1.15 var(--font); }
+    .song-ticket > .ticket-artist { display: block; grid-area: artist; align-self: start; color: var(--ink-2); font-size: var(--t-m); }
+    .mic-card {
+      display: grid;
+      grid-template-columns: 60px minmax(0, 1fr);
+      grid-template-areas: "icon text" "icon bars";
+      align-items: center;
+      gap: 4px var(--s-4);
+      padding: 10px var(--s-3);
+    }
+    .mic-icon { grid-area: icon; width: 60px; height: 60px; padding: 8px; border-radius: 3px; background: var(--sunken); fill: none; stroke: var(--ink); stroke-width: 2.6; stroke-linecap: round; }
+    .mic-text { grid-area: text; display: grid; gap: 2px; min-width: 0; }
+    .mic-text b { font-size: var(--t-m); }
+    .mic-text span { color: var(--ink-2); font-size: var(--t-s); line-height: 1.3; }
+    .mic-bars { grid-area: bars; display: flex; align-items: flex-end; gap: var(--s-3); height: 20px; }
+    .mic-bars .bars { display: flex; flex: 1; align-items: flex-end; gap: 4px; height: 100%; }
+    .mic-bars i { flex: 1; border-radius: 1px; background: var(--line); }
+    .mic-bars i.on { background: var(--ink); }
+    .mic-num { min-width: 2ch; color: var(--ink); font-size: var(--t-m); text-align: right; }
+    /* Основное действие и выбор сразу под карточками, затем совет и «Настройки звука». */
+    .check-actions { order: 1; }
+    .go { flex: 1 1 100%; min-height: 54px; font-family: var(--font); font-size: 1.2rem; }
+    .checklist { order: 2; gap: 0; padding: 0 var(--s-4); }
+    .checklist ul { padding-top: var(--s-3); }
+    .status { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    .settings-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 52px;
+      padding: 0;
+      border: 0;
+      background: none;
+      color: var(--ink);
+      font: 600 var(--t-m) / 1 var(--font);
+      text-decoration: none;
+    }
+    .settings-toggle svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+    .mic-settings { padding-bottom: var(--s-3); }
+    .mic-settings.collapsed { display: none; }
+    .device { order: 3; height: 104px; }
+    .mic-layout:not(.settings-open) .device { display: none; }
   }
 </style>

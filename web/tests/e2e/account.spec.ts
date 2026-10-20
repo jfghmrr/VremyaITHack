@@ -30,7 +30,8 @@ test("кабинет: регистрация, история, изоляция �
   await a.getByRole("button", { name: "Создать кабинет" }).click();
   await expect(a.getByRole("heading", { name: "Дина" })).toBeVisible();
   await a.goto("/progress");
-  await expect(a.getByRole("region", { name: "Мой прогресс", exact: true }).getByText("0 песен · 0 попыток")).toBeVisible();
+  // Имя и счётчики — в шапке кабинета рядом с ярлыком «Мой прогресс».
+  await expect(a.getByRole("main").getByText("0 песен · 0 попыток")).toBeVisible();
   await a.getByRole("button", { name: "История исполнений" }).click();
   await expect(a.getByText("Здесь будут твои попытки и дуэли.")).toBeVisible();
   await singOnce(a);
@@ -87,8 +88,10 @@ test("вызов-призрак: ссылка открывается во вто
   await fakeMic(one, "cn-earth", { shift: 3 });
   const p1 = await one.newPage();
   await singOnce(p1);
-  await p1.getByLabel("Имя для вызова").fill("Саша");
+  // Имя для вызова задаётся в карточке «Поделиться»: ссылка пересобирается и копируется заново.
   await p1.getByRole("button", { name: "Поделиться" }).click();
+  await p1.getByLabel("Имя для вызова").fill("Саша");
+  await expect(p1.getByText("Ссылка обновлена и скопирована")).toBeVisible();
   const link = await p1.evaluate(() => navigator.clipboard.readText());
   expect(link).toContain("/#echo=");
 

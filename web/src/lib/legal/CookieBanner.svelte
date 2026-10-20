@@ -92,7 +92,12 @@
     .banner {
       flex-direction: column;
       align-items: stretch;
-      gap: var(--s-2);
+      gap: 6px;
+      /* Плотнее (18.10.2026): на первом визите кнопка согласия на проверке микрофона остаётся
+         в первом экране 390×844 над нижним меню. */
+      padding: 6px var(--s-2) var(--s-2) 10px;
+      font-size: 0.75rem;
+      line-height: 1.3;
     }
     .accept {
       align-self: flex-end;

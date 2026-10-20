@@ -21,7 +21,10 @@
     });
   });
   $effect(() => {
-    if (attached && !error) void goto(`/duels/match/${attached.match_id}`, { replaceState: true });
+    if (!attached || error) return;
+    // Принятое приглашение на реванш больше не показывается.
+    if (live.room?.invite && live.room.match_id === attached.match_id) live.room = null;
+    void goto(`/duels/match/${attached.match_id}`, { replaceState: true });
   });
 </script>
 
@@ -30,7 +33,7 @@
 <section class="room">
   <h1>Комната <span class="mono">{code}</span></h1>
   {#if account.loaded && !account.profile}
-    <p class="notice">Чтобы спеть с другом вживую, войди в кабинет. <a href={signInHref(page.url.pathname)}>Войти</a></p>
+    <p class="notice">Чтобы спеть с другом вживую, войди в кабинет. <a class="btn" href={signInHref(page.url.pathname)}>Войти</a></p>
   {:else if error}
     <p class="notice error" role="alert">{error}</p>
     <a class="btn" href="/duels">К дуэлям</a>

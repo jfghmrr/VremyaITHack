@@ -2,6 +2,8 @@
   // Оформление правовых документов: читаемая колонка текста и навигация между ними.
   import { legalNavigation } from "./navigation.svelte.ts";
   import { page } from "$app/state";
+  import { onMount } from "svelte";
+  import { PHONE_QUERY } from "#lib/ui/stage.svelte.ts";
   let { title, updated, children }: { title: string; updated: string; children: import("svelte").Snippet } = $props();
   const docs = [
     { href: "/legal/terms", label: "Пользовательское соглашение" },
@@ -11,10 +13,17 @@
     { href: "/legal/music", label: "Музыка и лицензии" },
     { href: "/legal/contacts", label: "Контакты" },
   ];
+  // Телефон: закладки — одна прокручиваемая строка; открытый документ виден в ней сразу.
+  let tabs = $state<HTMLElement>();
+  onMount(() => {
+    if (!matchMedia(PHONE_QUERY).matches || !tabs) return;
+    const current = tabs.querySelector<HTMLElement>('[aria-current="page"]');
+    if (current) tabs.scrollLeft = current.offsetLeft - (tabs.clientWidth - current.offsetWidth) / 2;
+  });
 </script>
 
 <div class="legal">
-  <nav aria-label="Документы">
+  <nav aria-label="Документы" bind:this={tabs}>
     {#each docs as d (d.href)}
       <a href={d.href} aria-current={page.url.pathname === d.href ? "page" : undefined}>{d.label}</a>
     {/each}
@@ -28,9 +37,11 @@
 </div>
 
 <style>
+  /* Закладки и лист — одна группа по центру окна: справа от документа не остаётся пустая половина. */
   .legal {
     display: grid;
-    grid-template-columns: 250px minmax(0, 1fr);
+    grid-template-columns: 250px minmax(0, 78ch);
+    justify-content: center;
     gap: var(--s-7);
     padding-top: var(--s-5);
     padding-bottom: var(--s-7);
@@ -169,6 +180,30 @@
     article :global(table) {
       display: block;
       overflow-x: auto;
+    }
+  }
+  /* Телефон (PHONE_QUERY): закладки документов — одна строка с прокруткой во всю ширину окна;
+     крестик не нужен — стрелка «назад» в шапке ведёт туда же. */
+  @media (max-width: 599px), (max-width: 799px) and (min-height: 521px) {
+    .legal {
+      gap: var(--s-3);
+      padding-top: var(--s-3);
+    }
+    nav {
+      flex-wrap: nowrap;
+      gap: 6px;
+      margin-inline: calc(-1 * var(--gutter));
+      padding: 2px var(--gutter) 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    nav a {
+      flex: none;
+      padding: 0 var(--s-4) 0 var(--s-3);
+      white-space: nowrap;
+    }
+    .close-legal {
+      display: none;
     }
   }
 </style>

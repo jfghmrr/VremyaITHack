@@ -52,22 +52,62 @@ pub fn apply(cfg: &GameConfig, player: Rating, opponent_mmr: f64, actual: f64) -
     }
 }
 
-/// Можно ли свести двух игроков с учётом окон обоих, пула и защиты новичков.
-/// Окна передаются уже рассчитанными по времени ожидания каждого.
-pub fn compatible(cfg: &GameConfig, a: &Rating, window_a: f64, b: &Rating, window_b: f64) -> bool {
-    if a.calibrating(cfg) != b.calibrating(cfg) {
-        return false;
-    }
+/// Почему двоих из очереди пока нельзя свести. Поиск показывает это игроку, а не крутится молча.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum Block {
+    /// Защита новичков: один защищён, другой сильный по текущему или историческому MMR.
+    Protected,
+    /// Один проходит калибровку, другой нет: пулы откроются друг для друга через `opens_in_ms`
+    /// (к этому моменту окна обоих уже вмещают разницу).
+    Pool { opens_in_ms: i64 },
+    /// Разница уровня больше окна одного из двоих; `fits_in_ms` — когда окна обоих её вместят,
+    /// `None` — никогда (больше предела окна).
+    Window { diff: f64, fits_in_ms: Option<i64> },
+}
+
+/// Пулы калибровки и основной открываются друг для друга, когда оба ждут не меньше
+/// `cross_pool_seconds`: двое в очереди не ждут вечно только потому, что один уже откалиброван.
+pub fn pools_open(cfg: &GameConfig, waited_a_ms: i64, waited_b_ms: i64) -> bool {
+    let need = (cfg.cross_pool_seconds * 1000) as i64;
+    waited_a_ms.min(waited_b_ms) >= need
+}
+
+/// Можно ли свести двух игроков с учётом окон обоих, пула и защиты новичков. Время ожидания
+/// каждого определяет его окно и открытие пулов друг для друга.
+pub fn check(cfg: &GameConfig, a: &Rating, waited_a_ms: i64, b: &Rating, waited_b_ms: i64) -> Result<(), Block> {
     let diff = (a.mmr - b.mmr).abs();
-    if diff > window_a.min(window_b) {
-        return false;
-    }
     for (x, y) in [(a, b), (b, a)] {
-        if x.protected(cfg) && (y.strong(cfg) || diff > cfg.protected_max_diff) {
-            return false;
+        if x.protected(cfg) && y.strong(cfg) {
+            return Err(Block::Protected);
         }
     }
-    true
+    let fits_in = |r: &Rating, waited: i64| -> Option<i64> {
+        if window(cfg, r, waited) >= diff {
+            return Some(0);
+        }
+        let cap = if r.protected(cfg) { cfg.window_max.min(cfg.protected_max_diff) } else { cfg.window_max };
+        if cap < diff {
+            return None;
+        }
+        let steps = ((diff - cfg.window_start) / cfg.window_step).ceil().max(0.0) as i64;
+        Some((steps * cfg.window_step_seconds as i64 * 1000 - waited).max(0))
+    };
+    let fits = match (fits_in(a, waited_a_ms), fits_in(b, waited_b_ms)) {
+        (Some(x), Some(y)) => Some(x.max(y)),
+        _ => None,
+    };
+    if a.calibrating(cfg) != b.calibrating(cfg) && !pools_open(cfg, waited_a_ms, waited_b_ms) {
+        let need = (cfg.cross_pool_seconds * 1000) as i64;
+        let opens = (need - waited_a_ms).max(need - waited_b_ms).max(0);
+        return match fits {
+            Some(f) => Err(Block::Pool { opens_in_ms: opens.max(f) }),
+            None => Err(Block::Window { diff, fits_in_ms: None }),
+        };
+    }
+    match fits {
+        Some(0) => Ok(()),
+        fits_in_ms => Err(Block::Window { diff, fits_in_ms }),
+    }
 }
 
 /// Окно близости: ±80, каждые 15 секунд +20, максимум ±150; защищаемому — не больше ±100.
@@ -216,29 +256,57 @@ mod tests {
         assert_eq!(window(&cfg, &newbie, 600_000), 100.0);
     }
 
+    const HOUR: i64 = 3_600_000;
+
     #[test]
     fn protection_survives_long_waits() {
         let cfg = GameConfig::default();
         let newbie = r(1090.0, 1090.0, 12);
         // Сильный по истории игрок, временно опустившийся до 1180: близко, но запрещён.
         let fallen_star = r(1180.0, 1450.0, 80);
-        let wa = window(&cfg, &newbie, 3_600_000);
-        let wb = window(&cfg, &fallen_star, 3_600_000);
-        assert!(!compatible(&cfg, &newbie, wa, &fallen_star, wb));
+        assert_eq!(check(&cfg, &newbie, HOUR, &fallen_star, HOUR), Err(Block::Protected));
         // Разница больше 100 запрещена новичку даже при максимальном окне.
         let regular = r(1195.0, 1195.0, 40);
-        assert!(!compatible(&cfg, &newbie, wa, &regular, window(&cfg, &regular, 3_600_000)));
+        assert!(matches!(check(&cfg, &newbie, HOUR, &regular, HOUR), Err(Block::Window { fits_in_ms: None, .. })));
         let close = r(1150.0, 1150.0, 40);
-        assert!(compatible(&cfg, &newbie, wa, &close, window(&cfg, &close, 3_600_000)));
+        assert_eq!(check(&cfg, &newbie, HOUR, &close, HOUR), Ok(()));
+        // Защита действует и тогда, когда сильный игрок ещё проходит калибровку (пулы уже открыты).
+        let calibrating_star = r(1060.0, 1450.0, 4);
+        assert_eq!(check(&cfg, &newbie, HOUR, &calibrating_star, HOUR), Err(Block::Protected));
     }
 
     #[test]
-    fn calibration_pool_is_separate() {
+    fn calibration_pool_opens_after_wait() {
         let cfg = GameConfig::default();
         let a = r(1000.0, 1000.0, 3);
         let b = r(1010.0, 1010.0, 25);
-        assert!(!compatible(&cfg, &a, 150.0, &b, 150.0));
-        assert!(compatible(&cfg, &a, 80.0, &r(1060.0, 1060.0, 9), 80.0));
+        // Сначала пулы раздельны: подбор ищет среди таких же.
+        assert_eq!(check(&cfg, &a, 0, &b, 0), Err(Block::Pool { opens_in_ms: 30_000 }));
+        assert_eq!(check(&cfg, &a, 40_000, &b, 12_000), Err(Block::Pool { opens_in_ms: 18_000 }));
+        // Оба ждут 30 секунд: калибровка больше не разделяет, окна по-прежнему должны подходить.
+        assert_eq!(check(&cfg, &a, 30_000, &b, 30_000), Ok(()));
+        assert_eq!(check(&cfg, &a, 0, &r(1060.0, 1060.0, 9), 0), Ok(()));
+        // Пул открывается не раньше, чем окна вместят разницу.
+        let far = r(1110.0, 1110.0, 25);
+        assert_eq!(check(&cfg, &a, 0, &far, 0), Err(Block::Pool { opens_in_ms: 30_000 }));
+        let farther = r(1130.0, 1130.0, 25);
+        assert_eq!(check(&cfg, &a, 0, &farther, 0), Err(Block::Pool { opens_in_ms: 45_000 }));
+        // Разница больше предела окна — пары не будет ни в каком пуле.
+        assert!(matches!(check(&cfg, &a, HOUR, &r(1200.0, 1200.0, 25), HOUR), Err(Block::Window { fits_in_ms: None, .. })));
+    }
+
+    /// Решение владельца (2026-10-17): защищаемый новичок после 30 с ожидания может встретить
+    /// игрока на калибровке — только в пределах ±100 MMR и не сильного по истории.
+    #[test]
+    fn protected_newbie_meets_calibrating_player_within_100() {
+        let cfg = GameConfig::default();
+        let newbie = r(1080.0, 1080.0, 12);
+        assert!(newbie.protected(&cfg));
+        let calibrating = r(1000.0, 1000.0, 3);
+        assert!(matches!(check(&cfg, &newbie, 0, &calibrating, 0), Err(Block::Pool { .. })));
+        assert_eq!(check(&cfg, &newbie, 30_000, &calibrating, 30_000), Ok(()));
+        let far = r(970.0, 970.0, 3);
+        assert!(matches!(check(&cfg, &newbie, HOUR, &far, HOUR), Err(Block::Window { fits_in_ms: None, .. })));
     }
 
     #[test]
@@ -246,8 +314,14 @@ mod tests {
         let cfg = GameConfig::default();
         let a = r(1300.0, 1300.0, 50);
         let b = r(1400.0, 1400.0, 50);
-        assert!(!compatible(&cfg, &a, 150.0, &b, 80.0), "критерий должен подходить обоим");
-        assert!(compatible(&cfg, &a, 150.0, &b, 100.0));
+        // Окно Б ещё ±80 (только вошёл), окно А уже ±150: критерий должен подходить обоим.
+        assert_eq!(check(&cfg, &a, 60_000, &b, 0), Err(Block::Window { diff: 100.0, fits_in_ms: Some(15_000) }));
+        assert_eq!(check(&cfg, &a, 60_000, &b, 15_000), Ok(()));
+        // Разница 107 у двоих, вошедших одновременно: окна ±120 через 30 секунд.
+        let c = r(1000.0, 1000.0, 30);
+        let d = r(1107.0, 1107.0, 30);
+        assert_eq!(check(&cfg, &c, 0, &d, 0), Err(Block::Window { diff: 107.0, fits_in_ms: Some(30_000) }));
+        assert_eq!(check(&cfg, &c, 31_000, &d, 31_000), Ok(()));
     }
 
     #[test]

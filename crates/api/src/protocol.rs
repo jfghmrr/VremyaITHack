@@ -30,7 +30,13 @@ pub enum ClientMsg {
     Ping { c: f64 },
     QueueJoin,
     QueueLeave,
-    RoomCreate { song_id: String },
+    /// Комната для игры с другом. `mode` — «Кто лучше» (по умолчанию, как у прежних клиентов)
+    /// или «Вместе»: по очереди по строке.
+    RoomCreate {
+        song_id: String,
+        #[serde(default)]
+        mode: MatchMode,
+    },
     RoomJoin { code: String },
     Accept { match_id: Uuid },
     Decline { match_id: Uuid },
@@ -42,6 +48,9 @@ pub enum ClientMsg {
     Finish { match_id: Uuid, count: u32 },
     Leave { match_id: Uuid },
     Rematch { match_id: Uuid },
+    /// «Вместе»: согласие поделиться своим голосом (только свои ходы) с партнёром для общего
+    /// прослушивания. Меняется только до начала песни; по умолчанию выключено.
+    VoiceShare { match_id: Uuid, on: bool },
 }
 
 impl ClientMsg {
@@ -53,7 +62,8 @@ impl ClientMsg {
             | Self::Perf { match_id, .. }
             | Self::Finish { match_id, .. }
             | Self::Leave { match_id }
-            | Self::Rematch { match_id } => Some(*match_id),
+            | Self::Rematch { match_id }
+            | Self::VoiceShare { match_id, .. } => Some(*match_id),
             _ => None,
         }
     }
@@ -81,7 +91,19 @@ pub enum ServerMsg {
     Match { view: Box<MatchView> },
     /// Промежуточная кривая соперника для анимации. Может быть пропущена или заменена.
     Opponent { match_id: Uuid, from: u32, points: Vec<Option<i16>> },
-    Room { match_id: Uuid, code: String },
+    /// Комната: своя (`invite: false`) или приглашение соперника (`invite: true`).
+    /// `rematch_of` — матч, после которого предложен реванш.
+    Room {
+        match_id: Uuid,
+        code: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        rematch_of: Option<Uuid>,
+        #[serde(default)]
+        invite: bool,
+        /// Режим комнаты: приглашение на реванш называет его.
+        #[serde(default)]
+        mode: MatchMode,
+    },
     Error { message: String },
 }
 
@@ -150,6 +172,39 @@ impl MatchState {
     }
 }
 
+/// Режим матча. «Кто лучше» (`versus`) — дуэль: оба поют всю песню, побеждает точность.
+/// «Вместе» (`coop`) — только комната друга: поют по очереди, по строке, общий балл без победителя.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum MatchMode {
+    #[default]
+    Versus,
+    Coop,
+}
+
+impl MatchMode {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Versus => "versus",
+            Self::Coop => "coop",
+        }
+    }
+    pub fn parse(s: &str) -> Self {
+        if s == "coop" { Self::Coop } else { Self::Versus }
+    }
+}
+
+/// Ход режима «Вместе»: участник `slot` поёт с `start_s` до `end_s` (секунды от начала песни,
+/// окно строки с небольшим запасом) строки текста `lines` (номера в `lyrics` эталона).
+/// Расписание строит сервер (`coop::schedule`); клиенты его не пересчитывают.
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, JsonSchema)]
+pub struct Turn {
+    pub slot: u8,
+    pub start_s: f64,
+    pub end_s: f64,
+    pub lines: Vec<u32>,
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct SongRef {
     pub id: String,
@@ -172,12 +227,21 @@ pub struct PlayerView {
     pub left: bool,
     /// Сколько точек кривой принято сервером.
     pub points: u32,
+    /// «Вместе»: участник согласился поделиться голосом с партнёром.
+    #[serde(default)]
+    pub share_voice: bool,
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
 pub struct MatchView {
     pub match_id: Uuid,
     pub kind: String,
+    /// Режим: «Кто лучше» или «Вместе». Прежние клиенты поле не знают и видят обычную дуэль.
+    #[serde(default)]
+    pub mode: MatchMode,
+    /// Расписание ходов «Вместе»; у «Кто лучше» пусто и не передаётся.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub turns: Vec<Turn>,
     pub state: MatchState,
     pub song: SongRef,
     pub algorithm_version: u32,
@@ -208,5 +272,37 @@ pub struct PlayerResult {
 pub struct MatchResult {
     pub rated: bool,
     pub technical: bool,
+    /// Для «Вместе» `score` и `axes` каждого — оценка его партии (только его ходы),
+    /// исход у обоих `draw`: победителя нет.
     pub players: Vec<PlayerResult>,
+    /// Только «Вместе»: общий балл и партии.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub team: Option<TeamResult>,
+}
+
+/// Итог «Вместе»: общий балл — среднее партий, взвешенное по длительности спетой мелодии.
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct TeamResult {
+    /// null, если хотя бы одна партия не оценена (неполная кривая).
+    pub score: Option<f64>,
+    pub parts: Vec<PartResult>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct PartResult {
+    pub user_id: Uuid,
+    pub slot: u8,
+    pub turns: u32,
+    /// Длительность мелодии эталона в ходах участника, с: вес партии в общем балле.
+    pub seconds: f64,
+    pub score: Option<f64>,
+    /// Самое трудное место партии (окно разбора ядра).
+    pub hardest: Option<HardMoment>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, JsonSchema)]
+pub struct HardMoment {
+    pub start_s: f64,
+    pub end_s: f64,
+    pub reason: scoring_core::Reason,
 }

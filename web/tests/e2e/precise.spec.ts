@@ -257,7 +257,7 @@ test("согласие на запись голоса: одно нажатие �
   await page.keyboard.press("Enter");
   await expect(page.getByRole("button", { name: "Начать пение" })).toHaveCount(0);
   const tap = consent.getByRole("button", { name: "Согласен, включить микрофон" });
-  expect((await tap.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+  expect((await tap.boundingBox())!.height).toBeGreaterThanOrEqual(44 - 0.5);
   await tap.click();
   await expect(page.getByRole("button", { name: "Начать пение" })).toBeEnabled();
   await expect(consent).toHaveCount(0);

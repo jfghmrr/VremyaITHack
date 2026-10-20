@@ -4,6 +4,8 @@ import { expect, it } from "vitest";
 import { MARGIN_S, TRACK_RATE, encodeWav, mono, suggestWindow } from "../src/lib/tracks/wav";
 
 const RATE = TRACK_RATE;
+/** Тесты с минутами звука по 44,1 кГц: на загруженном Mac дольше 5 с по умолчанию. */
+const HEAVY_TIMEOUT_MS = 60_000;
 const ascii = (bytes: Uint8Array, at: number, n: number) => String.fromCharCode(...bytes.subarray(at, at + n));
 const pcmOf = (wav: Uint8Array) => new Int16Array(wav.slice(44).buffer);
 
@@ -33,7 +35,7 @@ it("WAV: заголовок RIFF/WAVE, PCM 16 бит, моно, 44,1 кГц", ()
   expect(ascii(wav, 36, 4)).toBe("data");
   expect(view.getUint32(40, true)).toBe(wav.byteLength - 44);
   expect(pcmOf(wav)[RATE * 5]).toBe(Math.round(0.25 * 32767));
-});
+}, HEAVY_TIMEOUT_MS);
 
 it("WAV: длина = (окно + 4 с) × 44100 × 2 + 44 для любого окна 15–60 с", () => {
   const samples = new Float32Array(RATE * 90);
@@ -44,7 +46,7 @@ it("WAV: длина = (окно + 4 с) × 44100 × 2 + 44 для любого �
     [80, 15],
   ])
     expect(encodeWav(samples, start, length).byteLength).toBe((length + 4) * 44100 * 2 + 44);
-});
+}, HEAVY_TIMEOUT_MS);
 
 it("WAV: отрывок начинается ровно через 2 с; поля за краями файла — тишина", () => {
   const samples = Float32Array.from({ length: RATE * 20 }, (_, i) => 0.1 + (i % 100) / 400);
@@ -56,7 +58,7 @@ it("WAV: отрывок начинается ровно через 2 с; пол�
   expect(tail[0]).toBe(Math.round(samples[3 * RATE] * 32767));
   expect(tail[(2 + 15) * RATE - 1]).toBe(Math.round(samples[20 * RATE - 1] * 32767));
   expect(tail.subarray((2 + 15) * RATE).every((v) => v === 0)).toBe(true);
-});
+}, HEAVY_TIMEOUT_MS);
 
 it("моно: среднее каналов", () => {
   const left = Float32Array.of(1, 0.5, -1);
@@ -78,4 +80,4 @@ it("отрывок по умолчанию: первое 30-секундное �
   const { start } = suggestWindow(blocks([...Array(20).fill(0.02), ...Array(20).fill(0.2), ...Array(30).fill(0.5), ...Array(10).fill(0.05)]));
   expect(start).toBeGreaterThanOrEqual(10);
   expect(start).toBeLessThanOrEqual(40);
-});
+}, HEAVY_TIMEOUT_MS);

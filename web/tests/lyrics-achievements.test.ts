@@ -35,3 +35,11 @@ it('достижения выдаются только за новые резу�
   expect(next.filter(a=>a.got).map(a=>a.id)).toEqual(['first','five','songs']);
   expect(achievementsOf([],[{state:'finished',outcome:'win'}]).filter(a=>a.got).map(a=>a.id)).toEqual(['duel','win']);
 });
+
+it('«Вместе» — не дуэль с соперником: «Первая дуэль» и «Победа в дуэли» за неё не выдаются', () => {
+  const coop = achievementsOf([], [{ state: 'finished', outcome: 'draw', mode: 'coop' }]);
+  expect(coop.filter(a => a.got).map(a => a.id)).toEqual([]);
+  // Дуэль «Кто лучше» с другом по-прежнему считается.
+  const versus = achievementsOf([], [{ state: 'finished', outcome: 'draw', mode: 'versus' }]);
+  expect(versus.filter(a => a.got).map(a => a.id)).toEqual(['duel']);
+});

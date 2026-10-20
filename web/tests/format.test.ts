@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { plural, signed } from "../src/lib/ui/format";
+import { count, FRAGMENTS, plural, SECONDS, sec, signed } from "../src/lib/ui/format";
 
 it("склонение по числу", () => {
   const f = (n: number) => plural(n, ["попытка", "попытки", "попыток"]);
@@ -10,4 +10,14 @@ it("склонение по числу", () => {
 
 it("знак и типографский минус", () => {
   expect([signed(-5), signed(3.04), signed(0)]).toEqual(["−5", "+3", "0"]);
+});
+
+it("число со словом: «32 фрагмента», «21 секунда», без переноса строки", () => {
+  expect([1, 21, 22, 32, 11, 25].map((n) => count(n, FRAGMENTS))).toEqual(
+    ["1 фрагмент", "21 фрагмент", "22 фрагмента", "32 фрагмента", "11 фрагментов", "25 фрагментов"].map((s) => s.replace(" ", " ")),
+  );
+  expect([21, 22, 23, 31, 60].map((n) => count(n, SECONDS))).toEqual(
+    ["21 секунда", "22 секунды", "23 секунды", "31 секунда", "60 секунд"].map((s) => s.replace(" ", " ")),
+  );
+  expect(sec(22.6)).toBe("23 сек");
 });

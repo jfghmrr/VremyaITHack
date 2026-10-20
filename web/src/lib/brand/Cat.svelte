@@ -4,7 +4,9 @@
 </script>
 <script lang="ts">
   import { reducedMotion } from "#lib/ui/canvas.ts";
-  let { mood = "idle", size = 220, signal, say = "", tint = "red" }: { mood?: Mood; size?: number | string; signal?: CatSignal; say?: string; tint?: "red" | "blue" } = $props();
+  import { artDims } from "./art";
+  // Кот над сгибом передаёт loading="eager"; остальные (часто скрытые на телефоне) грузятся лениво.
+  let { mood = "idle", size = 220, signal, say = "", tint = "red", loading = "lazy" }: { mood?: Mood; size?: number | string; signal?: CatSignal; say?: string; tint?: "red" | "blue"; loading?: "lazy" | "eager" } = $props();
   const poses: Record<Mood, string> = { idle: "cat-listen-s01", groove: "cat-guitar-s03", listening: "cat-sing-s01", singing: "cat-sing-s02", happy: "cat-paw-up-s01", thumbs: "cat-paw-up-s01", shy: "cat-encouragement-s03", tear: "cat-encouragement-s03", sleepy: "cat-sleep-s02", unplugged: "cat-empty-s03", empty: "cat-laptop-s03", lying: "cat-sleep-s01" };
   let figure: HTMLElement;
   $effect(() => {
@@ -29,7 +31,7 @@
   });
 </script>
 <figure bind:this={figure} class="cat" class:groove={mood === "groove"} class:rival={tint === "blue"} style:--w={typeof size === "number" ? `${size}px` : size} aria-hidden="true">
-  <img src="/art/mascots/{poses[mood]}.webp?v=restored-1" alt="" draggable="false" />
+  <img src="/art/mascots/{poses[mood]}.webp?v=web-1" alt="" {...artDims(`mascots/${poses[mood]}`)} {loading} draggable="false" />
   {#if say}<figcaption>{say}</figcaption>{/if}
 </figure>
 <style>

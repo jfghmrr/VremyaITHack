@@ -21,6 +21,8 @@ RUN npm ci --no-audit --no-fund
 COPY web ./
 COPY fixtures /src/fixtures
 COPY contracts /src/contracts
+# Тесты сверяют значения сайта с исходниками сервера (редакция согласия, ранги, калибровка).
+COPY crates/api/src /src/crates/api/src
 COPY --from=rust /wasm ./src/lib/wasm
 # Тот же набор эталонов проверяется и в WASM-сборке.
 RUN npx svelte-kit sync && npx vitest run && npx vite build

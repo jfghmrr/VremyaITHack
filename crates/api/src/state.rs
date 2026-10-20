@@ -167,8 +167,11 @@ impl Compute {
             self.waiting.fetch_sub(1, Ordering::SeqCst);
             return Err(ComputeBusy);
         }
+        // Счётчик снимается и при отмене ожидания (вызывающий ушёл): иначе после `capacity`
+        // отменённых ожиданий пул навсегда отвечал бы «очередь переполнена».
+        let waiting = Waiting(&self.waiting);
         let permit = self.permits.clone().acquire_owned().await.expect("semaphore never closed");
-        self.waiting.fetch_sub(1, Ordering::SeqCst);
+        drop(waiting);
         tokio::task::spawn_blocking(move || {
             let _permit = permit;
             f()
@@ -179,5 +182,36 @@ impl Compute {
 
     pub fn waiting(&self) -> usize {
         self.waiting.load(Ordering::SeqCst)
+    }
+}
+
+/// Место в очереди ожидания `Compute`; освобождается при любом исходе, включая отмену.
+struct Waiting<'a>(&'a AtomicUsize);
+
+impl Drop for Waiting<'_> {
+    fn drop(&mut self) {
+        self.0.fetch_sub(1, Ordering::SeqCst);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Compute;
+    use std::time::Duration;
+
+    /// Вызывающий, ушедший во время ожидания (клиент закрыл соединение, внешний таймаут),
+    /// не остаётся в счётчике и не закрывает пул для следующих задач.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn cancelled_waiters_do_not_fill_the_queue() {
+        let compute = Compute::new(1, 4);
+        let busy = compute.clone();
+        let hold = tokio::spawn(async move { busy.run(|| std::thread::sleep(Duration::from_millis(300))).await });
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        for _ in 0..4 {
+            let _ = tokio::time::timeout(Duration::from_millis(10), compute.run(|| ())).await;
+        }
+        hold.await.unwrap().unwrap();
+        assert_eq!(compute.waiting(), 0, "cancelled waiters leaked");
+        assert!(compute.run(|| 1).await.is_ok(), "pool refuses work after cancelled waiters");
     }
 }

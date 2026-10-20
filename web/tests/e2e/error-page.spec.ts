@@ -8,6 +8,8 @@ test("страница 404: русский текст, выход на глав�
   await expect(page.getByRole("link", { name: "К песням" })).toBeVisible();
   await expect(page).toHaveTitle(/Страница не найдена/);
   await expect(page.getByText("Not Found")).toHaveCount(0);
+  // Кот «с ошибкой» (уставший над ноутбуком), а не «Ты можешь больше!» с табличкой (правка P7).
+  await expect(page.locator(".lost .cat img")).toHaveAttribute("src", /cat-empty-s03/);
   await expect(page.getByRole("navigation", { name: "Основная навигация" })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Документы" })).toBeVisible();
   await page.getByRole("link", { name: "К песням" }).click();
@@ -39,7 +41,9 @@ test.describe("страница ошибки на телефоне", () => {
     await page.waitForLoadState("networkidle");
     // Модуль следующего раздела не загружается (обрыв сети): клиентский переход ведёт на страницу ошибки 500.
     await page.route("**/_app/immutable/nodes/**", (route) => route.abort());
-    await page.getByRole("navigation", { name: "Основная навигация" }).getByRole("link", { name: "Лидеры" }).click();
+    // На телефоне разделы в меню (шапка в одну строку).
+    await page.getByRole("button", { name: "Меню", exact: true }).click();
+    await page.getByRole("dialog", { name: "Меню" }).getByRole("link", { name: "Лидеры" }).click();
     await expect(page.getByRole("heading", { name: "Что-то пошло не так" })).toBeVisible();
     await expect(page).toHaveTitle(/Ошибка/);
     await tall(page.locator(".lost").getByRole("button", { name: "Попробовать ещё раз" }), "«Попробовать ещё раз»");
@@ -52,8 +56,7 @@ test("переход по ссылке внутри сайта на несуще
   await page.waitForLoadState("networkidle");
   await page.evaluate(() => {
     const a = document.createElement("a");
-    // /songs/* занят статическими аудиофайлами: Caddy возвращает там обычный 404.
-    // Здесь проверяем несуществующую страницу приложения после его загрузки.
+    // /songs/* занят статическими аудиофайлами; здесь проверяем страницу приложения.
     a.href = "/missing/deeper";
     a.textContent = "битая ссылка";
     a.id = "broken";

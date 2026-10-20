@@ -4,6 +4,7 @@ mod accounts;
 mod catalog;
 mod complaints;
 mod config;
+mod coop;
 mod error;
 mod history;
 mod friends;
@@ -13,6 +14,7 @@ mod legacy;
 mod matches;
 mod oauth;
 mod perf;
+mod profanity;
 mod protocol;
 mod queue;
 mod ratings;
@@ -21,6 +23,7 @@ mod schemas;
 mod state;
 mod tracks;
 mod util;
+mod voices;
 mod worker;
 mod ws;
 
@@ -87,7 +90,9 @@ impl BodyKind {
 }
 
 fn body_kind(method: &Method, path: &str) -> BodyKind {
-    if *method == Method::PUT && path.starts_with("/api/perf/") && path.ends_with("/chunk") {
+    // Куски записи точной оценки и голос «Вместе» для партнёра — сырой PCM16.
+    let pcm = (path.starts_with("/api/perf/") && path.ends_with("/chunk")) || (path.starts_with("/api/matches/") && path.ends_with("/voice"));
+    if *method == Method::PUT && pcm {
         BodyKind::Pcm
     } else if *method == Method::PUT && path.starts_with("/api/tracks/") && path.ends_with("/audio") {
         BodyKind::Wav
@@ -127,6 +132,7 @@ pub fn router(st: AppState) -> Router {
         .merge(history::routes())
         .merge(catalog::routes())
         .merge(matches::routes())
+        .merge(voices::routes())
         .merge(ratings_routes())
         .merge(perf::routes())
         .merge(tracks::routes())
@@ -135,7 +141,9 @@ pub fn router(st: AppState) -> Router {
     Router::new()
         .merge(json)
         .merge(perf::upload_routes())
+        .merge(voices::upload_routes())
         .merge(tracks::upload_routes())
+        .merge(tracks::lyrics_routes())
         .merge(worker::upload_routes())
         .layer(middleware::from_fn_with_state(st.clone(), guard))
         .with_state(st)
@@ -187,6 +195,7 @@ pub fn spawn_background(st: &AppState) {
     tokio::spawn(matches::sweeper(st.clone()));
     tokio::spawn(queue::matchmaker(st.clone()));
     tokio::spawn(tracks::sweeper(st.clone()));
+    tokio::spawn(voices::sweeper(st.clone()));
 }
 
 #[tokio::main]

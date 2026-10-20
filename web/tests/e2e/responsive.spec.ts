@@ -119,10 +119,32 @@ async function audit(page: Page, touch: boolean): Promise<Audit> {
     }
 
     const overlaps: string[] = [];
+    // Телефон (с 18.10.2026): нижнее меню закреплено, панель «Петь» на песнях прилипает над ним —
+    // страница прокручивается под ними по замыслу. Пара «панель — элемент страницы» не в счёт,
+    // только если элемент выходит из-под панели: строки списка песен под панелью «Петь»; под
+    // нижним меню — элемент, который прокручивается вместе со страницей и в самом её конце
+    // оказывается выше меню. Закреплённый элемент под меню (как «Сохранить» в редакторе текста)
+    // по-прежнему ошибка.
+    const floatingBar = (el: Element) => {
+      const bar = el.closest("nav.tabbar, .pick .deck");
+      return bar && ["fixed", "sticky"].includes(getComputedStyle(bar).position) ? bar : null;
+    };
+    const pinned = (el: Element) => {
+      for (let p: Element | null = el; p && p !== document.body; p = p.parentElement) if (["fixed", "sticky"].includes(getComputedStyle(p).position)) return true;
+      return false;
+    };
+    const maxScroll = document.documentElement.scrollHeight - innerHeight;
+    const clearsUnder = (bar: Element, el: Element) => {
+      if (bar.matches(".deck")) return !!el.closest(".songs");
+      if (pinned(el)) return false;
+      return el.getBoundingClientRect().bottom + scrollY - maxScroll <= bar.getBoundingClientRect().top + 0.5;
+    };
     for (let i = 0; i < controls.length; i++)
       for (let j = i + 1; j < controls.length; j++) {
         const a = controls[i], b = controls[j];
         if (a.el.contains(b.el) || b.el.contains(a.el)) continue;
+        const [fa, fb] = [floatingBar(a.el), floatingBar(b.el)];
+        if (!fa !== !fb && clearsUnder((fa ?? fb)!, fa ? b.el : a.el)) continue;
         const w = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
         const h = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
         if (w > 0 && h > 0 && w * h > 4) overlaps.push(`${name(a.el)} ${fmt(a.box)} × ${name(b.el)} ${fmt(b.box)}`);
@@ -243,6 +265,18 @@ for (const [group, sizes] of Object.entries(groups) as [Group, Size[]][]) {
         await inViewport(page, page.getByRole("button", { name: "Пауза", exact: true }), s, "кнопка паузы на сцене");
         await inViewport(page, page.locator(".stage .screen"), s, "график высоты голоса");
         await expect.soft(page.locator(".stage .lines li.now").first(), `${s.w}×${s.h}: текущая строка песни`).toBeInViewport();
+        // Три круглые клавиши не сжимаются, время «0:03 / 0:13» в одну строку.
+        const player = await page.evaluate(() => {
+          const time = document.querySelector(".stage .time")!;
+          const range = document.createRange();
+          range.selectNodeContents(time);
+          return {
+            timeLines: new Set([...range.getClientRects()].map((r) => Math.round(r.top))).size,
+            keys: [...document.querySelectorAll(".stage .round")].map((k) => [Math.round(k.getBoundingClientRect().width), Math.round(k.getBoundingClientRect().height)]),
+          };
+        });
+        expect.soft(player.timeLines, `${s.w}×${s.h}: время на сцене в одну строку`).toBe(1);
+        expect.soft(player.keys, `${s.w}×${s.h}: клавиши плеера 52×52`).toEqual([[52, 52], [52, 52], [52, 52]]);
         await page.screenshot({ path: shotPath(browserName, s, "sing-stage") });
       }
       await expect(page).toHaveURL(/\/result$/, { timeout: 40_000 });
@@ -309,7 +343,10 @@ async function middle(locator: ReturnType<Page["locator"]>) {
 // WebKit рисовал зеркальную заднюю пластину дверцы поверх лицевой: на главной были
 // пустые цветные плиты без «Друзья» и «Мои песни». Ярлык и открытый шкафчик — бумага
 // (светлые), металл дверцы тёмный, поэтому проверка по яркости снимка.
-for (const s of [{ w: 390, h: 844 }, { w: 1366, h: 768 }]) {
+// С 18.10.2026 на телефоне в портрете вместо комнаты со шкафчиками — записка и карточки разделов
+// (макет владельца, tabbar.spec.ts и redesign.spec.ts); шкафчики проверяются на ноутбуке и на
+// ландшафте телефона, где комната осталась.
+for (const s of [{ w: 844, h: 390 }, { w: 1366, h: 768 }]) {
   const touch = s.w < 900;
   test.describe(`шкафчики на главной ${s.w}×${s.h}`, () => {
     test.use({ isMobile: touch, hasTouch: touch, viewport: { width: s.w, height: s.h } });
@@ -376,6 +413,27 @@ for (const s of [{ w: 390, h: 844 }, { w: 844, h: 390 }]) {
     });
   });
 }
+
+// «К содержимому» (QA L27): спрятана, пока нет фокуса (не цель нажатия и не видна), а в фокусе
+// видна целиком и на сенсорном экране не ниже 44 px; переход ставит фокус в основное содержимое.
+test.describe("ссылка «К содержимому» 390×844", () => {
+  test.use({ isMobile: true, hasTouch: true, viewport: { width: 390, height: 844 } });
+
+  test("скрыта без фокуса, в фокусе видна и не ниже 44 px", async ({ page }) => {
+    await page.goto("/songs");
+    await page.waitForLoadState("networkidle");
+    const skip = page.getByRole("link", { name: "К содержимому" });
+    await expect(skip).toHaveCSS("opacity", "0");
+    await skip.focus();
+    await expect(skip).toHaveCSS("opacity", "1");
+    await expect(skip).toBeInViewport({ ratio: 1 });
+    const box = await skip.boundingBox();
+    expect(box!.height, "высота ссылки в фокусе").toBeGreaterThanOrEqual(44);
+    await page.keyboard.press("Enter");
+    await expect(page.locator("main#main")).toBeFocused();
+    await expect(skip).toHaveCSS("opacity", "0");
+  });
+});
 
 test.describe("поворот телефона", () => {
   test.use({ isMobile: true, hasTouch: true, viewport: { width: 390, height: 844 } });
